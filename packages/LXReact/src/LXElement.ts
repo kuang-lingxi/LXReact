@@ -14,7 +14,7 @@ export function lxCreateElement(
       return instance.render();
     }
 
-    return (elementType as Function)();
+    return (elementType as Function)(props);
   }
 
   const element = {
