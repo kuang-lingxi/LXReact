@@ -1,8 +1,8 @@
-import { lXCreateElement } from './LXElement'
+import { lxCreateElement } from './LXElement'
 import { LXComponent, LXPurComponent } from './LXBaseComponent'
 
 export {
-  lXCreateElement,
+  lxCreateElement,
   LXComponent,
   LXPurComponent,
 }
