@@ -1,6 +1,10 @@
 export abstract class LXComponent {
   static isComponent = true;
+  public props;
   public state;
+  constructor(props) {
+    this.props = props;
+  }
   forceUpdate() {}
   setState(state) {
     this.state = {
