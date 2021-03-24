@@ -1,0 +1,17 @@
+{
+  "name": "lx-react-dom",
+  "version": "0.0.1",
+  "description": "lx-react-dom",
+  "main": "dist/index.js",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "lx-react-dom"
+  ],
+  "author": "kuanglingxi",
+  "license": "ISC"
+}

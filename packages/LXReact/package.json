@@ -1,0 +1,20 @@
+{
+  "name": "lxreact",
+  "version": "0.0.3",
+  "description": "lxreact",
+  "main": "dist/index.js",
+  "directories": {
+    "test": "test"
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "lxreact"
+  ],
+  "author": "kuanglingxi",
+  "license": "ISC"
+}

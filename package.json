@@ -1,4 +1,9 @@
 {
+  "scripts": {
+    "build": "yarn build:LXReact && yarn build:LXReactDOM",
+    "build:LXReact": "esbuild packages/LXReact/index.ts --outfile=packages/LXReact/dist/index.js --bundle --format=esm --target=es6",
+    "build:LXReactDOM": "esbuild packages/LXReactDOM/index.ts --outfile=packages/LXReactDOM/dist/index.js --bundle --format=esm --target=es6"
+  },
   "devDependencies": {
     "@typescript-eslint/eslint-plugin": "^4.19.0",
     "@typescript-eslint/parser": "^4.19.0",

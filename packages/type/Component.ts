@@ -4,5 +4,5 @@ export interface LXReactComponentType {
 }
 
 export interface ComponentAttributeType {
-  style: object;
+  style?: object;
 }
