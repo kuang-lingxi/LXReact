@@ -1,8 +1,7 @@
-import { ComponentAttributeType, LXReactElementType } from '../../type/Component';
-import { LXComponent } from './LXBaseComponent';
+import { ComponentAttributeType, LXReactComponentType, LXReactElementType } from '../../type/Component';
 
 export function lxCreateElement(
-  elementType: string | (typeof LXComponent) | Function,
+  elementType: string | LXReactComponentType | Function,
   props: ComponentAttributeType,
   ...children
 ): LXReactElementType {
@@ -10,8 +9,13 @@ export function lxCreateElement(
     const isComponent = (elementType as any)?.isComponent || false;
 
     if(isComponent) {
-      const instance = new (elementType as any)(props);
-      return instance.render();
+      const instance = new (elementType as any)({
+        ...props,
+        children,
+      });
+      const element = instance.render();
+      element.instance = instance;
+      return element;
     }
 
     return (elementType as Function)(props);

@@ -1,11 +1,16 @@
+import { LXVirtualDOMType } from "../../type/Component";
+
 export abstract class LXComponent {
   static isComponent = true;
   public props;
   public state;
+  public virtualNode: LXVirtualDOMType;
   constructor(props) {
     this.props = props;
   }
-  forceUpdate() {}
+  forceUpdate() {
+    
+  }
   setState(state) {
     this.state = {
       ...this.state,

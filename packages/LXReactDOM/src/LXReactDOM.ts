@@ -1,5 +1,7 @@
-import { render } from './LXRender'
+import { render, renderVirtualNode, updateElement } from './LXRender'
 
 export {
-  render
+  render,
+  renderVirtualNode,
+  updateElement
 }

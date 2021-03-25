@@ -1,8 +1,8 @@
-import { LXReactComponentType, LXReactElementType } from "../../type/Component";
+import { LXComponent } from "../../LXReact/src/LXBaseComponent";
+import { lxCreateElement } from "../../LXReact/src/LXElement";
+import { LXReactComponentType, LXReactElementType, LXVirtualDOMType } from "../../type/Component";
 
-let globalElement = null;
-
-let globalInstance = null;
+let globalVirtualDOM = null;
 
 function createTextNode(text: string) {
   return document.createTextNode(text);
@@ -29,28 +29,60 @@ function setAttribute(dom, props) {
   });
 }
 
-function renderElement(element: LXReactElementType, fatherDOM: HTMLElement) {
-  const fragment = document.createDocumentFragment();
-  const { type, props, children } = element;
+export function renderVirtualNode(virtualNode: LXVirtualDOMType) {
+  let dom;
+  const { type, props, children } = virtualNode;
   if(type === 'text') {
-    fragment.appendChild(createTextNode(element.value));
+    dom = createTextNode(virtualNode.value);
   }else {
-    const dom = createDOM(type);
+    dom = createDOM(type);
     setAttribute(dom, props);
-    children.forEach(elementItem => renderElement(elementItem, dom));
-    fragment.appendChild(dom);
+    children.forEach(virtualItem => dom.appendChild(renderVirtualNode(virtualItem)));
   }
-  
-  fatherDOM.appendChild(fragment)
+  virtualNode.realDOM = dom;
+  return dom;
 }
 
+export function updateVirtualDOM(oldVirtualNode: LXVirtualDOMType, newVirtualNode: LXVirtualDOMType) {
+  const fatherVirtualNode = oldVirtualNode.father;
+  newVirtualNode.father = fatherVirtualNode;
+  const index = fatherVirtualNode.children.findIndex(item => oldVirtualNode === item);
+  fatherVirtualNode.children.splice(index, 1, newVirtualNode);
+}
+
+export function updateElement(instance: LXComponent) {
+  const newVirtualNode = genVirtualDOM(instance.render());
+  const newDOM = renderVirtualNode(newVirtualNode);
+  const oldVirtualNode = instance.virtualNode;
+  const oldDOM = oldVirtualNode.realDOM;
+  const fatherDOM = oldDOM.parentNode;
+  fatherDOM.replaceChild(newDOM, oldDOM);
+  updateVirtualDOM(oldVirtualNode, newVirtualNode);
+  instance.virtualNode = newVirtualNode;
+  newVirtualNode.realDOM = newDOM;
+}
+
+export function genVirtualDOM(element: LXReactElementType): LXVirtualDOMType {
+  const genNode = (fatherVirtual: LXVirtualDOMType, elementItem: LXReactElementType) => {
+    const virtualNode = {
+      ...elementItem,
+      father: fatherVirtual,
+      children: [],
+    }
+    virtualNode.children = elementItem.children.map(item => genNode(virtualNode, item));
+    const instance = virtualNode.instance;
+    if(instance) {
+      instance.virtualNode = virtualNode;
+      instance.forceUpdate = () => updateElement(instance);
+    }
+    return virtualNode;
+  }
+
+  return genNode(null, element);
+}
 
 export function render(Component: LXReactComponentType, root: HTMLElement) {
-  if (Component.isComponent) {
-    globalInstance = new (Component as any)();
-    globalElement = globalInstance.render();
-  } else {
-    globalElement = (Component as any)();
-  }
-  renderElement(globalElement, root);
+  const element = lxCreateElement(Component, {}, []);
+  globalVirtualDOM = genVirtualDOM(element);
+  root.appendChild(renderVirtualNode(globalVirtualDOM));
 }
