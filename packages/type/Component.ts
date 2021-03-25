@@ -6,3 +6,10 @@ export interface LXReactComponentType {
 export interface ComponentAttributeType {
   style?: object;
 }
+
+export interface LXReactElementType {
+  type: string,
+  props: object,
+  children: LXReactElementType[],
+  value?: string,
+}

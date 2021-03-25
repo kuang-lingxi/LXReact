@@ -1,11 +1,11 @@
-import { ComponentAttributeType } from '../../type/Component';
+import { ComponentAttributeType, LXReactElementType } from '../../type/Component';
 import { LXComponent } from './LXBaseComponent';
 
 export function lxCreateElement(
   elementType: string | (typeof LXComponent) | Function,
-  props: ComponentAttributeType = {},
+  props: ComponentAttributeType,
   ...children
-) {
+): LXReactElementType {
   if(typeof elementType === 'function') {
     const isComponent = (elementType as any)?.isComponent || false;
 
@@ -17,10 +17,25 @@ export function lxCreateElement(
     return (elementType as Function)(props);
   }
 
+  const formatChildren = (child) => {
+    return child.map(item => {
+      if(typeof item === 'string' || typeof item === 'number') {
+        return {
+          type: 'text',
+          value: item,
+          children: [],
+          props: {}
+        }
+      }
+
+      return item;
+    })
+  }
+
   const element = {
     type: elementType,
-    config: props || {},
-    children: [ ...children ].flat(),
+    props: props || {},
+    children: formatChildren(children).flat(),
   };
 
   return element;
