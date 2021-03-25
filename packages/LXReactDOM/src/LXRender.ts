@@ -45,6 +45,10 @@ export function renderVirtualNode(virtualNode: LXVirtualDOMType) {
 
 export function updateVirtualDOM(oldVirtualNode: LXVirtualDOMType, newVirtualNode: LXVirtualDOMType) {
   const fatherVirtualNode = oldVirtualNode.father;
+  if(!fatherVirtualNode) {
+    globalVirtualDOM = newVirtualNode;
+    return ;
+  }
   newVirtualNode.father = fatherVirtualNode;
   const index = fatherVirtualNode.children.findIndex(item => oldVirtualNode === item);
   fatherVirtualNode.children.splice(index, 1, newVirtualNode);
