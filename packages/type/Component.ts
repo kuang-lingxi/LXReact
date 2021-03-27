@@ -7,19 +7,25 @@ export interface ComponentAttributeType {
 }
 
 export interface LXReactElementType {
-  type: string,
-  props: object,
+  component: string | LXReactComponentType | Function,
+  props: {
+    [key: string]: any,
+    __value?: string
+  },
   children: LXReactElementType[],
-  value?: string,
-  instance?: any,
 }
 
 export interface LXVirtualDOMType {
-  type: string,
-  props: object,
+  component: string | LXReactComponentType | Function,
+  props: {
+    [key: string]: any,
+    __value?: string
+  },
   value?: string,
   children: LXVirtualDOMType[],
   father: LXVirtualDOMType,
   brother?: LXVirtualDOMType,
-  realDOM?: HTMLElement
+  realDOM?: HTMLElement,
+  instance?: any,
+  name: string,
 }
