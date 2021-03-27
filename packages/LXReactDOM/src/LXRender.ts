@@ -13,6 +13,7 @@ function createDOM(type: string) {
 }
 
 function setAttribute(dom, props) {
+  const regexpEvent = /^on([A-Z][a-zA-Z]*$)/;
   Object.keys(props).forEach((key) => {
     switch (key) {
       case 'style':
@@ -20,11 +21,16 @@ function setAttribute(dom, props) {
           dom.style[styleKey] = props[key][styleKey];
         });
         break;
-      case 'onClick':
-        dom.addEventListener('click', (e) => {
-          props[key](e);
-        });
+      case 'className':
+        dom.className = props[key];
         break;
+      default:
+        if(regexpEvent.test(key)) {
+          const event = regexpEvent.exec(key)[1].toLowerCase();
+          dom.addEventListener(event, props[key]);
+          break;
+        }
+        dom.setAttribute(key, props[key]);
     }
   });
 }
