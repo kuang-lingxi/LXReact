@@ -1,8 +1,7 @@
-import { render, renderVirtualNode, updateClassComponent, globalVirtualDOM } from './LXRender'
+import { render, renderVirtualNode, updateClassComponent } from './LXRender'
 
 export {
   render,
   renderVirtualNode,
-  updateClassComponent,
-  globalVirtualDOM
+  updateClassComponent
 }
