@@ -5,7 +5,7 @@ export function lxCreateElement(
   props: ComponentAttributeType,
   ...children
 ): LXReactElementType {
-  const formatChildren = (child) => {
+  const formatChildren = (child = []) => {
     return child.map(item => {
       if(typeof item === 'string' || typeof item === 'number') {
         return {
