@@ -43,28 +43,51 @@ function lxCreateElement(elementType, props, ...children) {
         return {
           component: "text",
           children: [],
-          props: {__value: item}
+          props: {__value: item},
+          name: "text",
+          key: null
         };
+      }
+      if (Array.isArray(item)) {
+        item.forEach((itemChild, index) => {
+          itemChild.key = index;
+        });
       }
       return item;
     });
   };
+  const finalProps = props || {};
+  const key = (finalProps == null ? void 0 : finalProps.key) || null;
+  delete finalProps["key"];
   const element = {
     component: elementType,
-    props: props || {},
-    children: formatChildren(children).flat()
+    props: finalProps,
+    children: formatChildren(children).flat(),
+    name: typeof elementType === "function" ? elementType.name : elementType,
+    key
   };
   return element;
 }
 var LXComponent = class {
   constructor(props) {
     this.props = props;
+    this.setState.bind(this);
   }
   forceUpdate() {
   }
   setState(state) {
     this.state = __assign(__assign({}, this.state), state);
     this.forceUpdate();
+  }
+  componentWillMount() {
+  }
+  componentDidMount() {
+  }
+  componentWillReceiveProps(nextProps) {
+  }
+  componentWillUpdate() {
+  }
+  componentDidUpdate() {
   }
 };
 LXComponent.isComponent = true;

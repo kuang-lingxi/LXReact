@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-vars */
 import { LXVirtualDOMType } from "../../type/Component";
 
 export abstract class LXComponent {
@@ -7,6 +8,7 @@ export abstract class LXComponent {
   public virtualNode: LXVirtualDOMType;
   constructor(props) {
     this.props = props;
+    this.setState.bind(this);
   }
   forceUpdate() {
     
@@ -18,11 +20,24 @@ export abstract class LXComponent {
     };
     this.forceUpdate();
   }
+
+  // 挂载生命周期
+  componentWillMount() {}
+  componentDidMount() {}
+
+  // 更新生命周期
+  componentWillReceiveProps(nextProps) {}
+  // shouldComponentUpdate(nextProps, nextState) {}
   abstract render(): any;
+  componentWillUpdate() {}
+  componentDidUpdate() {}
+
+  //卸载
+  // componentWillUnmount() {}
+
 }
 
 export class LXPurComponent extends LXComponent {
-  // eslint-disable-next-line no-unused-vars
   shouldComponentUpdate(nextProps, nextState) {
     
   }

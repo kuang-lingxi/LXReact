@@ -3,6 +3,7 @@ import { LXComponent } from "../LXReact/src/LXBaseComponent";
 export type LXReactComponentType =  typeof LXComponent;
 
 export interface ComponentAttributeType {
+  key?: string;
   style?: object;
 }
 
@@ -13,6 +14,8 @@ export interface LXReactElementType {
     __value?: string
   },
   children: LXReactElementType[],
+  name: string;
+  key: null | string;
 }
 
 export interface LXVirtualDOMType {
@@ -28,4 +31,5 @@ export interface LXVirtualDOMType {
   realDOM?: HTMLElement,
   instance?: any,
   name: string,
+  key: null | string;
 }

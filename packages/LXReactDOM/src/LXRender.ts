@@ -49,19 +49,27 @@ export function getElement(elementType, props) {
   }
 }
 
-export function renderVirtualNode(virtualNode: LXVirtualDOMType) {
+export function renderVirtualNode(virtualNode: LXVirtualDOMType, cb = () => {}) {
   let dom;
   const { component, props, children } = virtualNode;
   if(component === 'text') {
     dom = createTextNode(virtualNode.props.__value);
   }else if(typeof component === 'function'){
-    return renderVirtualNode(children[0]);
+    let comCb = cb;
+    if(virtualNode.instance) {
+      comCb = () => {
+        virtualNode.instance.componentDidMount();
+        cb();
+      }
+    }
+    return renderVirtualNode(children[0], comCb);
   }else {
     dom = createDOM(component);
     setAttribute(dom, props);
     children.forEach(virtualItem => dom.appendChild(renderVirtualNode(virtualItem)));
   }
   virtualNode.realDOM = dom;
+  cb();
   return dom;
 }
 
@@ -76,14 +84,32 @@ export function updateClassComponent(instance: LXComponent) {
   virtualNode.realDOM = newDOM;
 }
 
+export function cloneVirtualDOM(oldVirtualDOM: LXVirtualDOMType, props) {
+  return {
+    ...oldVirtualDOM,
+    props
+  }
+}
+
 export function updateVirtualDOM(oldVirtualDOM: LXVirtualDOMType, element: LXReactElementType) {
-  const { instance, component } = oldVirtualDOM;
   const newProps = {
     ...element.props,
     children: element.children,
   }
+
+  const newVirtualNode = cloneVirtualDOM(oldVirtualDOM, newProps);
+  const { instance, component, name, key, children } = newVirtualNode;
+  // 组件名不对应或者 key 改变了直接重新生成 virtualDOM
+  if(name !== element.name || element.key !== key) {
+    const { father: fatherVirtualNode } =  newVirtualNode;
+    const index = fatherVirtualNode.children.findIndex(item => item === newVirtualNode);
+    fatherVirtualNode.children.splice(index, 1, initVirtualDOM(element));
+    return ;
+  }
+
   if(instance) {
     // component 组件
+    instance.componentWillReceiveProps(element.props);
     instance.props = newProps;
     oldVirtualDOM.props = element.props;
     return updateVirtualDOM(oldVirtualDOM.children[0], instance.render());
@@ -91,11 +117,55 @@ export function updateVirtualDOM(oldVirtualDOM: LXVirtualDOMType, element: LXRea
     // 函数组件
     oldVirtualDOM.props = element.props;
     return updateVirtualDOM(oldVirtualDOM.children[0], (component as Function)(newProps));
-  }else {
-    oldVirtualDOM.props = element.props;
-    oldVirtualDOM.children.forEach((item, index) => {
-      updateVirtualDOM(item, element.children[index])
-    })
+  }
+
+  let newChildIndex = 0, newChildrenLen = children.length;
+  for(; newChildIndex < newChildrenLen; newChildIndex++) {
+    const child = children[newChildIndex];
+    const { name: childName } = child;
+    const elementChild = element.children[newChildIndex];
+    if(elementChild && childName === elementChild.name) {
+      updateVirtualDOM(child, elementChild);
+    }else {
+      break;
+    }
+  }
+
+  // 如果 element 的 children 数组里面还有, 证明这次新加了结点
+  if(newChildIndex === newChildrenLen && newChildIndex <= element.children.length) {
+    for(let i = newChildIndex; i < element.children.length; i++) {
+      newVirtualNode.children.push(initVirtualDOM(element.children[i]));
+    }
+
+    return ;
+  }
+
+  // 如果还有结点没有遍历完, 但是 element 的 children 数组里面已经没有了, 证明这次删除了结点
+  if(newChildIndex < newChildrenLen && newChildIndex === element.children.length) {
+    newVirtualNode.children =  newVirtualNode.children.slice(0, newChildIndex)
+
+    return ;
+  }
+
+  // 如果两边都没有遍历完但是退出了循环, 证明中间某个结点被改变了, 此时用 key 去找对应的结点
+  const childMap = new Map();
+  for(let i = newChildIndex; i < newChildrenLen; i++) {
+    const node = children[i];
+    childMap.set(node.key, node);
+  }
+
+  newVirtualNode.children = newVirtualNode.children.slice(0, newChildIndex);
+
+  for(let i = newChildIndex; i < element.children.length; i++) {
+    const node = element.children[i];
+    const { key } = node;
+    if(childMap.has(key)) {
+      const virtualDOM = childMap.get(key);
+      updateVirtualDOM(virtualDOM, node);
+      newVirtualNode.children.push(virtualDOM);
+    }else {
+      newVirtualNode.children.push(initVirtualDOM(node));
+    }
   }
 }
 
@@ -105,19 +175,22 @@ export function initVirtualDOM(element: LXReactElementType): LXVirtualDOMType {
     let virtualNode;
     if(typeof component === 'function') {
       const { element, instance } = getElement(component, { ...props, children });
+      if(instance) {
+        instance.virtualNode = virtualNode;
+        instance.forceUpdate = () => {updateClassComponent(instance)}
+        instance.componentWillMount();
+      }
       virtualNode = {
+        key: null,
         ...elementItem,
         father: fatherVirtual,
         children: [ initVirtualDOM(element) ],
         name: component.name,
         instance,
       }
-      if(instance) {
-        instance.virtualNode = virtualNode;
-        instance.forceUpdate = () => {updateClassComponent(instance)}
-      }
     }else {
       virtualNode = {
+        key: null,
         ...elementItem,
         father: fatherVirtual,
         children: [],
@@ -133,6 +206,7 @@ export function initVirtualDOM(element: LXReactElementType): LXVirtualDOMType {
 }
 
 export function render(Component: LXReactComponentType, root: HTMLElement) {
-  globalVirtualDOM = initVirtualDOM(lxCreateElement(Component, {}, {}));
+  const element = lxCreateElement(Component, {}, {});
+  globalVirtualDOM = initVirtualDOM(element);
   root.appendChild(renderVirtualNode(globalVirtualDOM));
 }
