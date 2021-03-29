@@ -85,6 +85,9 @@ var LXComponent = class {
   }
   componentWillReceiveProps(nextProps) {
   }
+  shouldComponentUpdate(nextProps, nextState) {
+    return true;
+  }
   componentWillUpdate() {
   }
   componentDidUpdate() {
@@ -93,6 +96,7 @@ var LXComponent = class {
 LXComponent.isComponent = true;
 var LXPurComponent = class extends LXComponent {
   shouldComponentUpdate(nextProps, nextState) {
+    return true;
   }
   render() {
   }

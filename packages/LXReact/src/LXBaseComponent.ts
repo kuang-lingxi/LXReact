@@ -27,7 +27,9 @@ export abstract class LXComponent {
 
   // 更新生命周期
   componentWillReceiveProps(nextProps) {}
-  // shouldComponentUpdate(nextProps, nextState) {}
+  shouldComponentUpdate(nextProps, nextState) {
+    return true;
+  }
   abstract render(): any;
   componentWillUpdate() {}
   componentDidUpdate() {}
@@ -39,7 +41,7 @@ export abstract class LXComponent {
 
 export class LXPurComponent extends LXComponent {
   shouldComponentUpdate(nextProps, nextState) {
-    
+    return true;
   }
 
   render() {}
