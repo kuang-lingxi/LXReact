@@ -19,7 +19,7 @@ export function lxCreateElement(
       }
       if(Array.isArray(item)) {
         item.forEach((itemChild, index) => {
-          itemChild.key = index;
+          itemChild.key = itemChild.key || index;
         })
       }
 

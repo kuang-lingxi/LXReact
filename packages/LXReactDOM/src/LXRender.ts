@@ -79,19 +79,13 @@ export function renderVirtualNode(virtualNode: LXVirtualDOMType, cb = () => {}) 
 
 export function updateClassComponent(instance: LXComponent) {
   const { virtualNode } = instance;
-  // console.log("instance", instance);
   const oldDOM = virtualNode.children[0].realDOM;
   const newVirtualNode = updateVirtualDOM(virtualNode.children[0], instance.render());
-  // console.log("newVirtualNode", newVirtualNode);
   const newDOM = renderVirtualNode(newVirtualNode);
-  // console.log("newDOM", newDOM);
   const fatherDOM = oldDOM.parentNode;
-  // console.log("fatherDOM", fatherDOM);
   fatherDOM.replaceChild(newDOM, oldDOM);
   virtualNode.children = [ newVirtualNode ];
   newVirtualNode.realDOM = newDOM;
-  // console.log("instance", instance);
-  // console.log("globalVirtualDOM", globalVirtualDOM);
 }
 
 export function cloneVirtualDOM(oldVirtualDOM: LXVirtualDOMType, props) {
@@ -134,9 +128,9 @@ export function updateVirtualDOM(oldVirtualDOM: LXVirtualDOMType, element: LXRea
   let newChildIndex = 0, newChildrenLen = children.length;
   for(; newChildIndex < newChildrenLen; newChildIndex++) {
     const child = children[newChildIndex];
-    const { name: childName } = child;
+    const { name: childName, key: childKey } = child;
     const elementChild = element.children[newChildIndex];
-    if(elementChild && childName === elementChild.name) {
+    if(elementChild && childName === elementChild.name && childKey === elementChild.key) {
       const childVirtualNode = updateVirtualDOM(child, elementChild);
       newVirtualNode.children[newChildIndex] = childVirtualNode;
     }else {
@@ -170,15 +164,17 @@ export function updateVirtualDOM(oldVirtualDOM: LXVirtualDOMType, element: LXRea
   const childMap = new Map();
   for(let i = newChildIndex; i < newChildrenLen; i++) {
     const node = children[i];
-    childMap.set(node.key, node);
+    if(node.key) {
+      childMap.set(node.key, node);
+    }
   }
 
   newVirtualNode.children = newVirtualNode.children.slice(0, newChildIndex);
 
   for(let i = newChildIndex; i < element.children.length; i++) {
     const node = element.children[i];
-    const { key } = node;
-    if(childMap.has(key)) {
+    const { key, name } = node;
+    if(childMap.has(key) && childMap.get(key).name === name) {
       const virtualDOM = childMap.get(key);
       updateVirtualDOM(virtualDOM, node);
       newVirtualNode.children.push(virtualDOM);
@@ -234,8 +230,6 @@ export function initVirtualDOM(element: LXReactElementType): LXVirtualDOMType {
 }
 
 export function render(Component: LXReactComponentType, root: HTMLElement) {
-  // const element = ;
   globalVirtualDOM = initVirtualDOM(lxCreateElement(Component, {}, {}));
-  // console.log("globalVirtualDOM", globalVirtualDOM);
   root.appendChild(renderVirtualNode(globalVirtualDOM));
 }

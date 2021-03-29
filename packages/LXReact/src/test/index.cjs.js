@@ -50,7 +50,7 @@ function lxCreateElement(elementType, props, ...children) {
       }
       if (Array.isArray(item)) {
         item.forEach((itemChild, index) => {
-          itemChild.key = index;
+          itemChild.key = itemChild.key || index;
         });
       }
       return item;
