@@ -6,6 +6,8 @@ export let globalVirtualDOM = null;
 
 const regexpEvent = /^on([A-Z][a-zA-Z]*$)/;
 
+let reactRoot = null;
+
 function createTextNode(text: string) {
   return document.createTextNode(text);
 }
@@ -46,7 +48,9 @@ function updateAttribute(dom, oldProps, newProps) {
           addProps[key] = newProps[key];
           break;
         case 'className':
-          dom.className = newProps[key];
+          if(oldProps[key] !== newProps[key]) {
+            dom.className = newProps[key];
+          }
           break;
         default:
           if(regexpEvent.test(key)) {
@@ -65,7 +69,7 @@ function updateAttribute(dom, oldProps, newProps) {
   })
   setAttribute(dom, addProps);
   // 找到旧 props 里面需要删除的
-  Object.keys(oldProps).forEach(key => {
+  Object.keys(oldProps || {}).forEach(key => {
     if(!(key in newProps)) {
       if(regexpEvent.test(key)) {
         const event = regexpEvent.exec(key)[1].toLowerCase();
@@ -117,35 +121,32 @@ export function renderVirtualNode(virtualNode: LXVirtualDOMType, fatherDOM: HTML
   return dom;
 }
 
-export function updateRealDOM(virtualNode: LXVirtualDOMType) {
+export function updateRealDOM(virtualNode: LXVirtualDOMType, fatherDOM: HTMLElement) {
   const {realDOM: dom, component, props, children} = virtualNode;
   // class / 函数类组件不带有真实 DOM
   if(typeof component === 'function') {
-    const updateDom = updateRealDOM(children[0]);
+    const updateDom = updateRealDOM(children[0], fatherDOM);
     children[0].realDOM = updateDom;
     return updateDom;
   }
 
-  if(!virtualNode.realDOM) {
-    return renderVirtualNode(virtualNode, virtualNode.father.realDOM);
+  if(component === 'text') {
+    dom.nodeValue = props.__value;
   }else {
-    if(component === 'text') {
-      dom.nodeValue = props.__value;
-    }else {
-      updateAttribute(dom, virtualNode.oldProps, virtualNode.props);
-      children.forEach(virtualItem => {
-        updateRealDOM(virtualItem);
-      });
-    }
-
-    return dom;
+    updateAttribute(dom, virtualNode.oldProps, virtualNode.props);
+    children.forEach(virtualItem => {
+      updateRealDOM(virtualItem, dom);
+    });
   }
+
+  return dom;
 }
 
 export function updateClassComponent(instance: LXComponent) {
   const { virtualNode } = instance;
   const newVirtualNode = updateVirtualDOM(virtualNode.children[0], instance.render());
-  updateRealDOM(newVirtualNode);
+  const fatherDOM = virtualNode.father ? virtualNode.father.realDOM : reactRoot;
+  updateRealDOM(newVirtualNode, fatherDOM);
 }
 
 export function cloneVirtualDOM(oldVirtualDOM: LXVirtualDOMType, props) {
@@ -165,9 +166,9 @@ export function updateVirtualDOM(oldVirtualDOM: LXVirtualDOMType, element: LXRea
     children: element.children,
   }
   const newVirtualNode = cloneVirtualDOM(oldVirtualDOM, element.props);
-  const { instance, component, name, key, children } = newVirtualNode;
+  const { instance, component, children } = newVirtualNode;
   // 组件名不对应或者 key 改变了直接重新生成 virtualDOM
-  if(name !== element.name || element.key !== key) {
+  if(oldVirtualDOM.name !== element.name || element.key !== oldVirtualDOM.key) {
     const { father: fatherVirtualNode } =  newVirtualNode;
     const index = fatherVirtualNode.children.findIndex(item => item === newVirtualNode);
     const childVirtualNode = initVirtualDOM(element);
@@ -243,10 +244,12 @@ export function updateVirtualDOM(oldVirtualDOM: LXVirtualDOMType, element: LXRea
     const node = element.children[i];
     const { key, name } = node;
     if(childMap.has(key) && childMap.get(key).name === name) {
+      // 能找到就放进来
       const virtualDOM = childMap.get(key);
       updateVirtualDOM(virtualDOM, node);
       newVirtualNode.children.push(virtualDOM);
     }else {
+      // 找不到直接新建
       const childVirtualNode = initVirtualDOM(node);
       childVirtualNode.father = newVirtualNode;
       newVirtualNode.children.push(childVirtualNode);
@@ -301,5 +304,6 @@ export function initVirtualDOM(element: LXReactElementType): LXVirtualDOMType {
 
 export function render(Component: LXReactComponentType, root: HTMLElement) {
   globalVirtualDOM = initVirtualDOM(lxCreateElement(Component, {}, {}));
+  reactRoot = root;
   renderVirtualNode(globalVirtualDOM, root)
 }
