@@ -4,6 +4,8 @@ import { LXReactComponentType, LXReactElementType, LXVirtualDOMType } from "../.
 
 export let globalVirtualDOM = null;
 
+const regexpEvent = /^on([A-Z][a-zA-Z]*$)/;
+
 function createTextNode(text: string) {
   return document.createTextNode(text);
 }
@@ -13,7 +15,6 @@ function createDOM(type: string) {
 }
 
 function setAttribute(dom, props) {
-  const regexpEvent = /^on([A-Z][a-zA-Z]*$)/;
   Object.keys(props).forEach((key) => {
     switch (key) {
       case 'style':
@@ -33,6 +34,47 @@ function setAttribute(dom, props) {
         dom.setAttribute(key, props[key]);
     }
   });
+}
+
+function updateAttribute(dom, oldProps, newProps) {
+  const addProps = {};
+  // 找到新 props 里面可以复用的, 和新增的
+  Object.keys(newProps).forEach(key => {
+    if(key in oldProps) {
+      switch (key) {
+        case 'style':
+          addProps[key] = newProps[key];
+          break;
+        case 'className':
+          dom.className = newProps[key];
+          break;
+        default:
+          if(regexpEvent.test(key)) {
+            if(oldProps[key] !== newProps[key]) {
+              const event = regexpEvent.exec(key)[1].toLowerCase();
+              dom.removeEventListener(event, oldProps[key]);
+              dom.addEventListener(event, newProps[key]);
+            }
+            break;
+          }
+          dom.setAttribute(key, newProps[key]);
+      }
+    }else {
+      addProps[key] = newProps[key];
+    }
+  })
+  setAttribute(dom, addProps);
+  // 找到旧 props 里面需要删除的
+  Object.keys(oldProps).forEach(key => {
+    if(!(key in newProps)) {
+      if(regexpEvent.test(key)) {
+        const event = regexpEvent.exec(key)[1].toLowerCase();
+        dom.removeEventListener(event, oldProps[key]);
+      }else {
+        dom.removeAttribute(key);
+      }
+    }
+  })
 }
 
 export function getElement(elementType, props) {
@@ -76,45 +118,48 @@ export function renderVirtualNode(virtualNode: LXVirtualDOMType, fatherDOM: HTML
 }
 
 export function updateRealDOM(virtualNode: LXVirtualDOMType) {
-  let dom;
-  const { component, props, children } = virtualNode;
-  if(component === 'text') {
-    dom = createTextNode(virtualNode.props.__value);
-    virtualNode.realDOM = dom;
-  }else if(typeof component === 'function'){
-    dom = updateRealDOM(children[0]);
-    children[0].realDOM = dom;
-    return dom;
-  }else {
-    dom = createDOM(component);
-    setAttribute(dom, props);
-    children.forEach(virtualItem => {
-      dom.appendChild(updateRealDOM(virtualItem));
-    });
-    virtualNode.realDOM = dom;
+  const {realDOM: dom, component, props, children} = virtualNode;
+  // class / 函数类组件不带有真实 DOM
+  if(typeof component === 'function') {
+    const updateDom = updateRealDOM(children[0]);
+    children[0].realDOM = updateDom;
+    return updateDom;
   }
-  return dom;
+
+  if(!virtualNode.realDOM) {
+    return renderVirtualNode(virtualNode, virtualNode.father.realDOM);
+  }else {
+    if(component === 'text') {
+      dom.nodeValue = props.__value;
+    }else {
+      updateAttribute(dom, virtualNode.oldProps, virtualNode.props);
+      children.forEach(virtualItem => {
+        updateRealDOM(virtualItem);
+      });
+    }
+
+    return dom;
+  }
 }
 
 export function updateClassComponent(instance: LXComponent) {
   const { virtualNode } = instance;
-  const oldDOM = virtualNode.children[0].realDOM;
   const newVirtualNode = updateVirtualDOM(virtualNode.children[0], instance.render());
-  const newDOM = updateRealDOM(newVirtualNode);
-  const fatherDOM = oldDOM.parentNode;
-  fatherDOM.replaceChild(newDOM, oldDOM);
-  virtualNode.children = [ newVirtualNode ];
-  newVirtualNode.realDOM = newDOM;
+  updateRealDOM(newVirtualNode);
 }
 
 export function cloneVirtualDOM(oldVirtualDOM: LXVirtualDOMType, props) {
   return {
     ...oldVirtualDOM,
+    oldProps: oldVirtualDOM.props,
     props
   }
 }
 
 export function updateVirtualDOM(oldVirtualDOM: LXVirtualDOMType, element: LXReactElementType) {
+  if(oldVirtualDOM.props === element.props) {
+    return oldVirtualDOM;
+  }
   const newProps = {
     ...element.props,
     children: element.children,

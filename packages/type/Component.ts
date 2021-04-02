@@ -18,12 +18,15 @@ export interface LXReactElementType {
   key: null | string;
 }
 
+export interface LXVirtualDOMTypeProps {
+  [key: string]: any,
+  __value?: string
+}
+
 export interface LXVirtualDOMType {
   component: string | LXReactComponentType | Function,
-  props: {
-    [key: string]: any,
-    __value?: string
-  },
+  props: LXVirtualDOMTypeProps,
+  oldProps?: LXVirtualDOMTypeProps,
   value?: string,
   children: LXVirtualDOMType[],
   father: LXVirtualDOMType,
