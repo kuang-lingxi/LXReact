@@ -6,7 +6,7 @@ export function lxCreateElement(
   ...children
 ): LXReactElementType {
   const formatChildren = (child = []) => {
-    return child.map((item) => {
+    return child.map((item, index) => {
 
       if(typeof item === 'string' || typeof item === 'number') {
         return {
@@ -17,11 +17,14 @@ export function lxCreateElement(
           key: null
         }
       }
+
       if(Array.isArray(item)) {
-        item.forEach((itemChild, index) => {
-          itemChild.key = itemChild.key || index;
+        item.forEach((itemChild, childIndex) => {
+          itemChild.key = itemChild.key || `${index}-${childIndex}`;
         })
       }
+
+      item.key = item.key || index;
 
       return item;
     })

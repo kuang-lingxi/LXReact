@@ -38,7 +38,7 @@ __export2(LXReact_exports, {
 });
 function lxCreateElement(elementType, props, ...children) {
   const formatChildren = (child = []) => {
-    return child.map((item) => {
+    return child.map((item, index) => {
       if (typeof item === "string" || typeof item === "number") {
         return {
           component: "text",
@@ -49,10 +49,11 @@ function lxCreateElement(elementType, props, ...children) {
         };
       }
       if (Array.isArray(item)) {
-        item.forEach((itemChild, index) => {
-          itemChild.key = itemChild.key || index;
+        item.forEach((itemChild, childIndex) => {
+          itemChild.key = itemChild.key || `${index}-${childIndex}`;
         });
       }
+      item.key = item.key || index;
       return item;
     });
   };

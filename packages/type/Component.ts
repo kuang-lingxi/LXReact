@@ -36,3 +36,9 @@ export interface LXVirtualDOMType {
   name: string,
   key: null | string;
 }
+
+export interface Update {
+  type: 'insert' | 'update' | 'delete' | 'replace' | 'listUpdate',
+  oldVirtualDOM?: LXVirtualDOMType,
+  newVirtualDOM?: LXVirtualDOMType,
+}
