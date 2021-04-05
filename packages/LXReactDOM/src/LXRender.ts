@@ -6,9 +6,33 @@ export let globalVirtualDOM = null;
 
 const regexpEvent = /^on([A-Z][a-zA-Z]*$)/;
 
+const formList = [ 'input', 'select', 'textarea' ];
+
 // let reactRoot = null;
 
 let updateList: Update[] = [];
+
+export function hasProperty(obj, prop) {
+  return Object.prototype.hasOwnProperty.call(obj, prop);
+}
+
+export function bindFormValue(dom, props) {
+  setTimeout(() => {
+    hasProperty(props, 'value') && (dom.value = props['value']);
+  }, 0);
+  const oldInput = props['onInput'];
+  const onChange = hasProperty(props, 'onChange') ? props['onChange'] : () => {};
+  delete props['onChange'];
+  props['onInput'] = (e) => {
+    oldInput && oldInput(e);
+    onChange(e) ;
+    hasProperty(props, 'value') && (dom.value = props['value']);
+  };
+}
+
+function isForm(dom) {
+  return formList.includes((dom.nodeName).toLowerCase());
+}
 
 function createTextNode(text: string) {
   return document.createTextNode(text);
@@ -33,14 +57,18 @@ function setAttribute(dom, props) {
         if(regexpEvent.test(key)) {
           const event = regexpEvent.exec(key)[1].toLowerCase();
           dom.addEventListener(event, props[key]);
-          break;
+        }else {
+          dom.setAttribute(key, props[key]);
         }
-        dom.setAttribute(key, props[key]);
     }
   });
 }
 
 function updateAttribute(dom, oldProps, newProps) {
+  // 表单属性需要做一些特别处理
+  if(isForm(dom)) {
+    bindFormValue(dom, newProps);
+  }
   const addProps = {};
   // 找到新 props 里面可以复用的, 和新增的
   Object.keys(newProps).forEach(key => {
@@ -112,6 +140,10 @@ export function renderVirtualNode(virtualNode: LXVirtualDOMType, fatherDOM: HTML
     return dom;
   }else {
     dom = createDOM(component);
+    // 表单属性需要做一些特别处理
+    if(isForm(dom)) {
+      bindFormValue(dom, props);
+    }
     setAttribute(dom, props);
     children.forEach(virtualItem => {
       renderVirtualNode(virtualItem, dom);
