@@ -272,7 +272,7 @@ export function updateVirtualDOM(oldVirtualNode: LXVirtualDOMType, element: LXRe
   const { instance, component } = newVirtualNode;
   // 组件名不对应或者 key 改变了直接重新生成 virtualDOM
   if(oldVirtualNode.name !== element.name || element.key !== oldVirtualNode.key) {
-    const childVirtualNode = initVirtualDOM(element);
+    const childVirtualNode = initVirtualDOM(element, newVirtualNode.static);
     replaceChildVirtualDOM(newVirtualNode, childVirtualNode)
     updateList.push({
       type: 'replace',
@@ -306,10 +306,12 @@ export function updateVirtualDOM(oldVirtualNode: LXVirtualDOMType, element: LXRe
     const elementChild = element.children[oldChildIndex];
     if(elementChild && childName === elementChild.name && childKey === elementChild.key) {
       const childVirtualNode = updateVirtualDOM(child, elementChild);
-      updateList.push({
-        type: 'update',
-        newVirtualDOM: childVirtualNode,
-      });
+      if(!child.static) {
+        updateList.push({
+          type: 'update',
+          newVirtualDOM: childVirtualNode,
+        });
+      }
       newVirtualNode.children[oldChildIndex] = childVirtualNode;
     }else {
       break;
@@ -323,7 +325,7 @@ export function updateVirtualDOM(oldVirtualNode: LXVirtualDOMType, element: LXRe
   // 如果 element 的 children 数组里面还有, 证明这次新加了结点
   if(oldChildIndex === oldChildrenLen && oldChildIndex <= element.children.length) {
     for(let i = oldChildIndex; i < element.children.length; i++) {
-      const childVirtualNode = initVirtualDOM(element.children[i]);
+      const childVirtualNode = initVirtualDOM(element.children[i], newVirtualNode.static);
       childVirtualNode.father = newVirtualNode;
       newVirtualNode.children.push(childVirtualNode);
       updateList.push({
@@ -379,7 +381,7 @@ export function updateVirtualDOM(oldVirtualNode: LXVirtualDOMType, element: LXRe
       });
     }else {
       // 找不到直接新建
-      const childVirtualNode = initVirtualDOM(node);
+      const childVirtualNode = initVirtualDOM(node, newVirtualNode.static);
       childVirtualNode.father = newVirtualNode;
       newVirtualNode.children.push(childVirtualNode);
       updateList.push({
@@ -399,9 +401,15 @@ export function updateVirtualDOM(oldVirtualNode: LXVirtualDOMType, element: LXRe
   return newVirtualNode;
 }
 
-export function initVirtualDOM(element: LXReactElementType): LXVirtualDOMType {
-  const genNode = (fatherVirtual: LXVirtualDOMType, elementItem: LXReactElementType) => {
+function isStatic(element: LXReactElementType, hasStaticFather: boolean) {
+  return typeof element.props?.static === 'boolean' ? element.props.static : hasStaticFather;
+}
+
+export function initVirtualDOM(element: LXReactElementType, hasStaticFather = false): LXVirtualDOMType {
+  const fatherStatic = isStatic(element, hasStaticFather);
+  const genNode = (fatherVirtual: LXVirtualDOMType, elementItem: LXReactElementType, hasStaticFather = false) => {
     const { component, props, children } = elementItem;
+    const nodeStatic = isStatic(elementItem, hasStaticFather);
     let virtualNode;
     if(typeof component === 'function') {
       const { element, instance } = getElement(component, { ...props, children });
@@ -415,8 +423,9 @@ export function initVirtualDOM(element: LXReactElementType): LXVirtualDOMType {
         children: [],
         name: component.name,
         instance,
+        static: nodeStatic
       }
-      const childVirtualNode = initVirtualDOM(element);
+      const childVirtualNode = initVirtualDOM(element, nodeStatic);
       childVirtualNode.father = virtualNode;
       virtualNode.children = [ childVirtualNode ];
       if(instance) {
@@ -431,15 +440,16 @@ export function initVirtualDOM(element: LXReactElementType): LXVirtualDOMType {
         ...elementItem,
         father: fatherVirtual,
         children: [],
-        name: component
+        name: component,
+        static: nodeStatic
       }
-      virtualNode.children = elementItem.children.map(item => genNode(virtualNode, item));
+      virtualNode.children = elementItem.children.map(item => genNode(virtualNode, item, nodeStatic));
     }
 
     return virtualNode;
   }
 
-  return genNode(null, element);
+  return genNode(null, element, fatherStatic);
 }
 
 export function render(Component: LXReactComponentType, root: HTMLElement) {

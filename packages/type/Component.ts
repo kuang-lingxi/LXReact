@@ -11,6 +11,7 @@ export interface LXReactElementType {
   component: string | LXReactComponentType | Function,
   props: {
     [key: string]: any,
+    static?: boolean,
     __value?: string
   },
   children: LXReactElementType[],
@@ -35,6 +36,7 @@ export interface LXVirtualDOMType {
   instance?: any,
   name: string,
   key: null | string;
+  static: boolean;
 }
 
 export interface Update {
