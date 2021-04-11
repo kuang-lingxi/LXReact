@@ -266,21 +266,22 @@ export function updateVirtualDOM(oldVirtualNode: LXVirtualDOMType, element: LXRe
     ...element.props,
     children: element.children,
   }
+  // 组件名不对应或者 key 改变了直接重新生成 virtualDOM
+  if(oldVirtualNode.name !== element.name || element.key !== oldVirtualNode.key) {
+    const newVirtualNode = initVirtualDOM(element, isStatic(element, oldVirtualNode.father.static));
+    replaceChildVirtualDOM(oldVirtualNode, newVirtualNode)
+    updateList.push({
+      type: 'replace',
+      oldVirtualDOM: oldVirtualNode,
+      newVirtualDOM: newVirtualNode,
+    });
+    return newVirtualNode;
+  }
   const newVirtualNode = cloneVirtualDOM(oldVirtualNode, element.props);
   // 修改 fatherVirtualDOM 的 child
   replaceChildVirtualDOM(oldVirtualNode, newVirtualNode);
   const { instance, component } = newVirtualNode;
-  // 组件名不对应或者 key 改变了直接重新生成 virtualDOM
-  if(oldVirtualNode.name !== element.name || element.key !== oldVirtualNode.key) {
-    const childVirtualNode = initVirtualDOM(element, newVirtualNode.static);
-    replaceChildVirtualDOM(newVirtualNode, childVirtualNode)
-    updateList.push({
-      type: 'replace',
-      oldVirtualDOM: oldVirtualNode,
-      newVirtualDOM: childVirtualNode,
-    });
-    return newVirtualNode;
-  }
+
 
   if(instance) {
     // component 组件
