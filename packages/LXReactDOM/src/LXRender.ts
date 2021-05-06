@@ -426,7 +426,7 @@ export function initVirtualDOM(element: LXReactElementType, hasStaticFather = fa
         instance,
         static: nodeStatic
       }
-      let childVirtualNode = initVirtualDOM(element, nodeStatic);
+      const childVirtualNode = initVirtualDOM(element, nodeStatic);
       childVirtualNode.father = virtualNode;
       virtualNode.children = [ childVirtualNode ];
       if(instance) {
