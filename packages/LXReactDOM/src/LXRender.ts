@@ -1,6 +1,6 @@
 import { LXComponent } from "../../LXReact/src/LXBaseComponent";
 import { lxCreateElement } from "../../LXReact/src/LXElement";
-import { LXReactComponentType, LXReactElementType, LXVirtualDOMType, Update } from "../../type/Component";
+import { CustomComponent, LXReactComponentType, LXReactElementType, LXVirtualDOMType, Update } from "../../type/Component";
 
 export let globalVirtualDOM = null;
 
@@ -412,6 +412,7 @@ export function initVirtualDOM(element: LXReactElementType, hasStaticFather = fa
     const { component, props, children } = elementItem;
     const nodeStatic = isStatic(elementItem, hasStaticFather);
     let virtualNode;
+    
     if(typeof component === 'function') {
       const { element, instance } = getElement(component, { ...props, children });
       if(instance) {
@@ -422,11 +423,10 @@ export function initVirtualDOM(element: LXReactElementType, hasStaticFather = fa
         ...elementItem,
         father: fatherVirtual,
         children: [],
-        name: component.name,
         instance,
         static: nodeStatic
       }
-      const childVirtualNode = initVirtualDOM(element, nodeStatic);
+      let childVirtualNode = initVirtualDOM(element, nodeStatic);
       childVirtualNode.father = virtualNode;
       virtualNode.children = [ childVirtualNode ];
       if(instance) {
@@ -441,11 +441,23 @@ export function initVirtualDOM(element: LXReactElementType, hasStaticFather = fa
         ...elementItem,
         father: fatherVirtual,
         children: [],
-        name: component,
         static: nodeStatic
       }
       virtualNode.children = elementItem.children.map(item => genNode(virtualNode, item, nodeStatic));
     }
+
+    return virtualNode;
+  }
+
+  if(element.name === CustomComponent.Fragment) {
+    const virtualNode = {
+      key: null,
+      ...element,
+      father: null,
+      children: [],
+      static: fatherStatic
+    }
+    virtualNode.children = element.children.map(item => genNode(virtualNode, item, fatherStatic));
 
     return virtualNode;
   }

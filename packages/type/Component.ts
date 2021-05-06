@@ -44,3 +44,7 @@ export interface Update {
   oldVirtualDOM?: LXVirtualDOMType,
   newVirtualDOM?: LXVirtualDOMType,
 }
+
+export const CustomComponent = {
+  Fragment: 'Fragment'
+}

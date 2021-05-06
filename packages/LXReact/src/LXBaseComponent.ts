@@ -1,6 +1,6 @@
 /* eslint-disable no-unused-vars */
 import { LXVirtualDOMType } from "../../type/Component";
-
+import { lxCreateElement } from "./LXElement";
 export abstract class LXComponent {
   static isComponent = true;
   public props;
@@ -44,5 +44,9 @@ export class LXPurComponent extends LXComponent {
     return true;
   }
 
+  render() {}
+}
+
+export class Fragment extends LXComponent {
   render() {}
 }

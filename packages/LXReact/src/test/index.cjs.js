@@ -32,6 +32,7 @@ var __export2 = (target, all) => {
 };
 var LXReact_exports = {};
 __export2(LXReact_exports, {
+  Fragment: () => Fragment,
   LXComponent: () => LXComponent,
   LXPurComponent: () => LXPurComponent,
   lxCreateElement: () => lxCreateElement
@@ -99,6 +100,10 @@ var LXPurComponent = class extends LXComponent {
   shouldComponentUpdate(nextProps, nextState) {
     return true;
   }
+  render() {
+  }
+};
+var Fragment = class extends LXComponent {
   render() {
   }
 };
