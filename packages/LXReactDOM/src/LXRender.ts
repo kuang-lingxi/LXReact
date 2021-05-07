@@ -39,7 +39,10 @@ function createTextNode(text: string) {
 }
 
 function createDOM(type: string) {
-  return document.createElement(type)
+  if(type === CustomComponent.Fragment) {
+    return document.createDocumentFragment();
+  }
+  return document.createElement(type);
 }
 
 function setAttribute(dom, props) {
@@ -449,24 +452,25 @@ export function initVirtualDOM(element: LXReactElementType, hasStaticFather = fa
     return virtualNode;
   }
 
-  if(element.name === CustomComponent.Fragment) {
-    const virtualNode = {
-      key: null,
-      ...element,
-      father: null,
-      children: [],
-      static: fatherStatic
-    }
-    virtualNode.children = element.children.map(item => genNode(virtualNode, item, fatherStatic));
+  // if(element.name === CustomComponent.Fragment) {
+  //   const virtualNode = {
+  //     key: null,
+  //     ...element,
+  //     father: null,
+  //     children: [],
+  //     static: fatherStatic
+  //   }
+  //   virtualNode.children = element.children.map(item => genNode(virtualNode, item, fatherStatic));
 
-    return virtualNode;
-  }
+  //   return virtualNode;
+  // }
 
   return genNode(null, element, fatherStatic);
 }
 
 export function render(Component: LXReactComponentType, root: HTMLElement) {
   globalVirtualDOM = initVirtualDOM(lxCreateElement(Component, {}, {}));
+  // console.log("globalVirtualDOM", globalVirtualDOM);
   // reactRoot = root;
   renderVirtualNode(globalVirtualDOM, root)
 }

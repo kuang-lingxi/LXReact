@@ -105,6 +105,7 @@ var LXPurComponent = class extends LXComponent {
 };
 var Fragment = class extends LXComponent {
   render() {
+    return lxCreateElement("fragment", null, this.props.children);
   }
 };
 var LXReact_default = LXReact_exports;

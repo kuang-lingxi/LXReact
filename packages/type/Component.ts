@@ -46,5 +46,5 @@ export interface Update {
 }
 
 export const CustomComponent = {
-  Fragment: 'Fragment'
+  Fragment: 'fragment'
 }
