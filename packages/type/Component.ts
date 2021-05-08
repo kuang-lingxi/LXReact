@@ -38,7 +38,7 @@ export interface LXVirtualDOMType {
   father: LXVirtualDOMType,
   brother?: LXVirtualDOMType,
   realDOM?: HTMLElement,
-  context?: Map<Symbol, {value: any}>;
+  context?: object;
   instance?: any,
   name: string,
   key: null | string;

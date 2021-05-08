@@ -120,14 +120,14 @@ var createLXContext = () => {
   const id = Symbol("lxContext");
   class Provider extends LXContextComponent {
     render() {
-      return lxCreateElement(CustomComponent.Fragment, this.props, this.props.children);
+      return lxCreateElement(CustomComponent.Fragment, null, this.props.children);
     }
   }
   Provider.contextId = id;
   class Consumer extends LXContextComponent {
     render() {
       const {children, value} = this.props;
-      return lxCreateElement(CustomComponent.Fragment, this.props, children(value));
+      return lxCreateElement(CustomComponent.Fragment, null, children[0](value));
     }
   }
   Consumer.contextId = id;

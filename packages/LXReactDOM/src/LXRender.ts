@@ -1,5 +1,5 @@
 import { LXComponent } from "../../LXReact/src/LXBaseComponent";
-import { LXContextComponentClass } from "../../LXReact/src/LXContext";
+import { deleteContext, getContext, LXContextComponentClass, setContext } from "../../LXReact/src/LXContext";
 import { lxCreateElement } from "../../LXReact/src/LXElement";
 import { CustomComponent, LXReactComponentClass, LXReactElementType, LXVirtualDOMType, Update } from "../../type/Component";
 
@@ -8,8 +8,6 @@ export let globalVirtualDOM = null;
 const regexpEvent = /^on([A-Z][a-zA-Z]*$)/;
 
 const formList = [ 'input', 'select', 'textarea' ];
-
-// let reactRoot = null;
 
 let updateList: Update[] = [];
 
@@ -115,8 +113,17 @@ function updateAttribute(dom, oldProps, newProps) {
   })
 }
 
-export function getElement(elementType, props) {
+export function getElement({ fatherVirtualDOM, elementType, props }) {
   if(typeof elementType === 'function') {
+    if(elementType.name === CustomComponent.Consumer) {
+      const contextId = (elementType as LXContextComponentClass).contextId;
+      const value = fatherVirtualDOM.context[contextId as any].value;
+      const instance = new (elementType as LXContextComponentClass)({ value, ...props });
+      const element = instance.render();
+
+      return { instance, element };
+    }
+
     const isComponent = elementType?.isComponent || false;
 
     if(isComponent) {
@@ -418,28 +425,31 @@ export function initVirtualDOM(element: LXReactElementType, hasStaticFather = fa
     let virtualNode;
     
     if(typeof component === 'function') {
-      let instance = null, element = null;
-      if(component.name === CustomComponent.Consumer) {
-        const lXContextComponentClass = component as LXContextComponentClass;
-        const contextId = lXContextComponentClass.contextId;
-        const value = fatherVirtual.context.get(contextId).value;
-        instance = new lXContextComponentClass({ value });
-        element = instance.render();
-      }else {
-        ({ element, instance } = getElement(component, { ...props, children }));
-      }
+      const { element, instance } = getElement({ 
+        elementType: component, 
+        props: { 
+          ...props, 
+          children 
+        },
+        fatherVirtualDOM: fatherVirtual, 
+      });
       if(instance) {
         instance.componentWillMount();
       }
+      setContext({ component, props });
       virtualNode = {
         key: null,
         ...elementItem,
         father: fatherVirtual,
         children: [],
         instance,
-        static: nodeStatic
+        static: nodeStatic,
+        context: {
+          ...getContext(),
+        }
       }
       const childVirtualNode = initVirtualDOM(element, nodeStatic);
+      deleteContext({ component });
       childVirtualNode.father = virtualNode;
       virtualNode.children = [ childVirtualNode ];
       if(instance) {
@@ -454,7 +464,10 @@ export function initVirtualDOM(element: LXReactElementType, hasStaticFather = fa
         ...elementItem,
         father: fatherVirtual,
         children: [],
-        static: nodeStatic
+        static: nodeStatic,
+        context: {
+          ...getContext(),
+        }
       }
       virtualNode.children = elementItem.children.map(item => genNode(virtualNode, item, nodeStatic));
     }
@@ -467,5 +480,6 @@ export function initVirtualDOM(element: LXReactElementType, hasStaticFather = fa
 
 export function render(Component: LXReactComponentClass, root: HTMLElement) {
   globalVirtualDOM = initVirtualDOM(lxCreateElement(Component, {}, {}));
+  console.log("globalVirtualDOM", globalVirtualDOM);
   renderVirtualNode(globalVirtualDOM, root)
 }
