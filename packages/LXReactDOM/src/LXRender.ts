@@ -1,6 +1,7 @@
 import { LXComponent } from "../../LXReact/src/LXBaseComponent";
+import { LXContextComponentClass } from "../../LXReact/src/LXContext";
 import { lxCreateElement } from "../../LXReact/src/LXElement";
-import { CustomComponent, LXReactComponentType, LXReactElementType, LXVirtualDOMType, Update } from "../../type/Component";
+import { CustomComponent, LXReactComponentClass, LXReactElementType, LXVirtualDOMType, Update } from "../../type/Component";
 
 export let globalVirtualDOM = null;
 
@@ -115,16 +116,16 @@ function updateAttribute(dom, oldProps, newProps) {
 }
 
 export function getElement(elementType, props) {
-    if(typeof elementType === 'function') {
-    const isComponent = (elementType as any)?.isComponent || false;
+  if(typeof elementType === 'function') {
+    const isComponent = elementType?.isComponent || false;
 
     if(isComponent) {
-      const instance = new (elementType as any)(props);
+      const instance = new elementType(props);
       const element = instance.render();
       return { element, instance };
     }
 
-    return { element: (elementType as Function)(props), instance: null };
+    return { element: elementType(props), instance: null };
   }
 }
 
@@ -417,7 +418,16 @@ export function initVirtualDOM(element: LXReactElementType, hasStaticFather = fa
     let virtualNode;
     
     if(typeof component === 'function') {
-      const { element, instance } = getElement(component, { ...props, children });
+      let instance = null, element = null;
+      if(component.name === CustomComponent.Consumer) {
+        const lXContextComponentClass = component as LXContextComponentClass;
+        const contextId = lXContextComponentClass.contextId;
+        const value = fatherVirtual.context.get(contextId).value;
+        instance = new lXContextComponentClass({ value });
+        element = instance.render();
+      }else {
+        ({ element, instance } = getElement(component, { ...props, children }));
+      }
       if(instance) {
         instance.componentWillMount();
       }
@@ -452,25 +462,10 @@ export function initVirtualDOM(element: LXReactElementType, hasStaticFather = fa
     return virtualNode;
   }
 
-  // if(element.name === CustomComponent.Fragment) {
-  //   const virtualNode = {
-  //     key: null,
-  //     ...element,
-  //     father: null,
-  //     children: [],
-  //     static: fatherStatic
-  //   }
-  //   virtualNode.children = element.children.map(item => genNode(virtualNode, item, fatherStatic));
-
-  //   return virtualNode;
-  // }
-
   return genNode(null, element, fatherStatic);
 }
 
-export function render(Component: LXReactComponentType, root: HTMLElement) {
+export function render(Component: LXReactComponentClass, root: HTMLElement) {
   globalVirtualDOM = initVirtualDOM(lxCreateElement(Component, {}, {}));
-  // console.log("globalVirtualDOM", globalVirtualDOM);
-  // reactRoot = root;
   renderVirtualNode(globalVirtualDOM, root)
 }

@@ -1,6 +1,11 @@
 import { LXComponent } from "../LXReact/src/LXBaseComponent";
+import { LXContextComponentClass } from "../LXReact/src/LXContext";
 
-export type LXReactComponentType =  typeof LXComponent;
+class _ extends LXComponent {
+  render(){}
+}
+
+export type LXReactComponentClass = typeof _;
 
 export interface ComponentAttributeType {
   key?: string;
@@ -8,7 +13,7 @@ export interface ComponentAttributeType {
 }
 
 export interface LXReactElementType {
-  component: string | LXReactComponentType | Function,
+  component: string | LXReactComponentClass | LXContextComponentClass | Function,
   props: {
     [key: string]: any,
     static?: boolean,
@@ -25,7 +30,7 @@ export interface LXVirtualDOMTypeProps {
 }
 
 export interface LXVirtualDOMType {
-  component: string | LXReactComponentType | Function,
+  component: string | LXReactComponentClass | Function,
   props: LXVirtualDOMTypeProps,
   oldProps?: LXVirtualDOMTypeProps,
   value?: string,
@@ -33,6 +38,7 @@ export interface LXVirtualDOMType {
   father: LXVirtualDOMType,
   brother?: LXVirtualDOMType,
   realDOM?: HTMLElement,
+  context?: Map<Symbol, {value: any}>;
   instance?: any,
   name: string,
   key: null | string;
@@ -46,5 +52,7 @@ export interface Update {
 }
 
 export const CustomComponent = {
-  Fragment: 'fragment'
+  Fragment: 'Fragment',
+  Provider: 'Provider',
+  Consumer: 'Consumer'
 }

@@ -1,7 +1,8 @@
-import { ComponentAttributeType, LXReactComponentType, LXReactElementType } from '../../type/Component';
+import { ComponentAttributeType, LXReactComponentClass, LXReactElementType } from '../../type/Component';
+import { LXContextComponentClass } from './LXContext';
 
 export function lxCreateElement(
-  elementType: string | LXReactComponentType | Function,
+  elementType: string | LXReactComponentClass | LXContextComponentClass | Function,
   props: ComponentAttributeType,
   ...children
 ): LXReactElementType {

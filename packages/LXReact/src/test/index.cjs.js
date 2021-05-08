@@ -35,6 +35,7 @@ __export2(LXReact_exports, {
   Fragment: () => Fragment,
   LXComponent: () => LXComponent,
   LXPurComponent: () => LXPurComponent,
+  createLXContext: () => createLXContext,
   lxCreateElement: () => lxCreateElement
 });
 function lxCreateElement(elementType, props, ...children) {
@@ -70,6 +71,11 @@ function lxCreateElement(elementType, props, ...children) {
   };
   return element;
 }
+var CustomComponent = {
+  Fragment: "Fragment",
+  Provider: "Provider",
+  Consumer: "Consumer"
+};
 var LXComponent = class {
   constructor(props) {
     this.props = props;
@@ -105,7 +111,29 @@ var LXPurComponent = class extends LXComponent {
 };
 var Fragment = class extends LXComponent {
   render() {
-    return lxCreateElement("fragment", null, this.props.children);
+    return lxCreateElement(CustomComponent.Fragment, null, this.props.children);
   }
+};
+var LXContextComponent = class extends LXComponent {
+};
+var createLXContext = () => {
+  const id = Symbol("lxContext");
+  class Provider extends LXContextComponent {
+    render() {
+      return lxCreateElement(CustomComponent.Fragment, this.props, this.props.children);
+    }
+  }
+  Provider.contextId = id;
+  class Consumer extends LXContextComponent {
+    render() {
+      const {children, value} = this.props;
+      return lxCreateElement(CustomComponent.Fragment, this.props, children(value));
+    }
+  }
+  Consumer.contextId = id;
+  return {
+    Provider,
+    Consumer
+  };
 };
 var LXReact_default = LXReact_exports;
