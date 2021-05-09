@@ -4,7 +4,7 @@
     "build": "yarn build:LXReact && yarn build:LXReactDOM && yarn test",
     "build:LXReact": "esbuild packages/LXReact/index.ts --outfile=packages/LXReact/dist/index.js --bundle --format=esm --target=es6",
     "build:LXReactDOM": "esbuild packages/LXReactDOM/index.ts --outfile=packages/LXReactDOM/dist/index.js --bundle --format=esm --target=es6",
-    "test": "esbuild packages/LXReact/dist/index.js --outfile=packages/LXReact/src/test/index.cjs.js --bundle --format=cjs && jest"
+    "test": "esbuild packages/LXReact/dist/index.js --outfile=packages/LXReact/test/index.cjs.js --bundle --format=cjs && jest"
   },
   "devDependencies": {
     "@typescript-eslint/eslint-plugin": "^4.19.0",

@@ -1,12 +1,13 @@
 import { CustomComponent } from "../../type/Component"
-import { LXComponent, lxCreateElement } from "./LXReact"
+import { lxCreateElement } from "./LXElement"
+import { LXComponent } from './LXBaseComponent';
 
 export const contextList = [];
 
 export function setContext({ component, props }) {
   if(component.name === CustomComponent.Provider) {
     const contextId = (component as LXContextComponentClass).contextId;
-    contextList.unshift({ [contextId as any]: { value: props.value } })
+    contextList.unshift({ [contextId as any]: { value: props.value } });
   }
 }
 
@@ -28,6 +29,14 @@ export function getContext() {
   })
 
   return res;
+}
+
+export function findContext({ contextId }) {
+  return contextList.find(item => Object.prototype.hasOwnProperty.call(item, contextId));
+}
+
+export function hasContext({ component }) {
+  return Object.prototype.hasOwnProperty.call(component, 'contextType');
 }
 
 

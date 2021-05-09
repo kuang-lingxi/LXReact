@@ -1,6 +1,6 @@
-import { lxCreateElement } from './LXElement';
-import { LXComponent, LXPurComponent, Fragment } from './LXBaseComponent';
 import { createLXContext } from './LXContext';
+import { LXComponent, LXPurComponent, Fragment } from './LXBaseComponent';
+import { lxCreateElement } from './LXElement';
 
 export {
   lxCreateElement,

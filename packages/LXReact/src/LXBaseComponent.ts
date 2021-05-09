@@ -3,8 +3,10 @@ import { CustomComponent, LXVirtualDOMType } from "../../type/Component";
 import { lxCreateElement } from "./LXReact";
 export abstract class LXComponent {
   static isComponent = true;
+  static contextType;
   public props;
   public state;
+  public context;
   public virtualNode: LXVirtualDOMType;
   constructor(props) {
     this.props = props;

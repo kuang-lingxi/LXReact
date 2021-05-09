@@ -1,4 +1,4 @@
-const { default: LXReact } = require('./index.cjs');
+const { default: LXReact } = require('./index.cjs.js');
 
 const jsxCode = jsxCode => {
   const { code } = require('esbuild').transformSync(jsxCode, {

@@ -1,7 +1,7 @@
 import { LXComponent } from "../../LXReact/src/LXBaseComponent";
 import { deleteContext, getContext, LXContextComponentClass, setContext } from "../../LXReact/src/LXContext";
 import { lxCreateElement } from "../../LXReact/src/LXElement";
-import { CustomComponent, LXReactComponentClass, LXReactElementType, LXVirtualDOMType, Update } from "../../type/Component";
+import { CustomComponent, LXComponentClass, LXReactElementType, LXVirtualDOMType, Update } from "../../type/Component";
 
 export let globalVirtualDOM = null;
 
@@ -128,6 +128,13 @@ export function getElement({ fatherVirtualDOM, elementType, props }) {
 
     if(isComponent) {
       const instance = new elementType(props);
+      if(Object.prototype.hasOwnProperty.call(Object.getPrototypeOf(instance).constructor, 'contextType')) {
+        const contextId = Object.getPrototypeOf(instance).constructor.contextType.Consumer.contextId;
+        if(Object.prototype.hasOwnProperty.call(fatherVirtualDOM.context, contextId)) {
+          instance.context = fatherVirtualDOM.context[contextId].value;
+        }
+      }
+
       const element = instance.render();
       return { element, instance };
     }
@@ -425,6 +432,7 @@ export function initVirtualDOM(element: LXReactElementType, hasStaticFather = fa
     let virtualNode;
     
     if(typeof component === 'function') {
+      setContext({ component, props });
       const { element, instance } = getElement({ 
         elementType: component, 
         props: { 
@@ -436,7 +444,6 @@ export function initVirtualDOM(element: LXReactElementType, hasStaticFather = fa
       if(instance) {
         instance.componentWillMount();
       }
-      setContext({ component, props });
       virtualNode = {
         key: null,
         ...elementItem,
@@ -478,7 +485,7 @@ export function initVirtualDOM(element: LXReactElementType, hasStaticFather = fa
   return genNode(null, element, fatherStatic);
 }
 
-export function render(Component: LXReactComponentClass, root: HTMLElement) {
+export function render(Component: LXComponentClass, root: HTMLElement) {
   globalVirtualDOM = initVirtualDOM(lxCreateElement(Component, {}, {}));
   console.log("globalVirtualDOM", globalVirtualDOM);
   renderVirtualNode(globalVirtualDOM, root)

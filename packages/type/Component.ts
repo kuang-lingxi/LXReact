@@ -5,7 +5,7 @@ class _ extends LXComponent {
   render(){}
 }
 
-export type LXReactComponentClass = typeof _;
+export type LXComponentClass = typeof _;
 
 export interface ComponentAttributeType {
   key?: string;
@@ -13,7 +13,7 @@ export interface ComponentAttributeType {
 }
 
 export interface LXReactElementType {
-  component: string | LXReactComponentClass | LXContextComponentClass | Function,
+  component: string | LXComponentClass | LXContextComponentClass | Function,
   props: {
     [key: string]: any,
     static?: boolean,
@@ -30,7 +30,7 @@ export interface LXVirtualDOMTypeProps {
 }
 
 export interface LXVirtualDOMType {
-  component: string | LXReactComponentClass | Function,
+  component: string | LXComponentClass | Function,
   props: LXVirtualDOMTypeProps,
   oldProps?: LXVirtualDOMTypeProps,
   value?: string,

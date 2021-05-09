@@ -38,44 +38,6 @@ __export2(LXReact_exports, {
   createLXContext: () => createLXContext,
   lxCreateElement: () => lxCreateElement
 });
-function lxCreateElement(elementType, props, ...children) {
-  const formatChildren = (child = []) => {
-    return child.map((item, index) => {
-      if (typeof item === "string" || typeof item === "number") {
-        return {
-          component: "text",
-          children: [],
-          props: {__value: item},
-          name: "text",
-          key: null
-        };
-      }
-      if (Array.isArray(item)) {
-        item.forEach((itemChild, childIndex) => {
-          itemChild.key = itemChild.key || `${index}-${childIndex}`;
-        });
-      }
-      item.key = item.key || index;
-      return item;
-    });
-  };
-  const finalProps = props || {};
-  const key = (finalProps == null ? void 0 : finalProps.key) || null;
-  delete finalProps["key"];
-  const element = {
-    component: elementType,
-    props: finalProps,
-    children: formatChildren(children).flat(),
-    name: typeof elementType === "function" ? elementType.name : elementType,
-    key
-  };
-  return element;
-}
-var CustomComponent = {
-  Fragment: "Fragment",
-  Provider: "Provider",
-  Consumer: "Consumer"
-};
 var LXComponent = class {
   constructor(props) {
     this.props = props;
@@ -114,6 +76,44 @@ var Fragment = class extends LXComponent {
     return lxCreateElement(CustomComponent.Fragment, null, this.props.children);
   }
 };
+var CustomComponent = {
+  Fragment: "Fragment",
+  Provider: "Provider",
+  Consumer: "Consumer"
+};
+function lxCreateElement(elementType, props, ...children) {
+  const formatChildren = (child = []) => {
+    return child.map((item, index) => {
+      if (typeof item === "string" || typeof item === "number") {
+        return {
+          component: "text",
+          children: [],
+          props: {__value: item},
+          name: "text",
+          key: null
+        };
+      }
+      if (Array.isArray(item)) {
+        item.forEach((itemChild, childIndex) => {
+          itemChild.key = itemChild.key || `${index}-${childIndex}`;
+        });
+      }
+      item.key = item.key || index;
+      return item;
+    });
+  };
+  const finalProps = props || {};
+  const key = (finalProps == null ? void 0 : finalProps.key) || null;
+  delete finalProps["key"];
+  const element = {
+    component: elementType,
+    props: finalProps,
+    children: formatChildren(children).flat(),
+    name: typeof elementType === "function" ? elementType.name : elementType,
+    key
+  };
+  return element;
+}
 var LXContextComponent = class extends LXComponent {
 };
 var createLXContext = () => {
