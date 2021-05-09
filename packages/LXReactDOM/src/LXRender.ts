@@ -149,7 +149,7 @@ export function getElement({ fatherVirtualDOM, elementType, props }) {
 
 export function renderVirtualNode(virtualNode: LXVirtualDOMType, fatherDOM: HTMLElement | DocumentFragment) {
   let dom;
-  const { component, props, children, instance } = virtualNode;
+  const { component, props, children, instance, ref } = virtualNode;
   if(component === 'text') {
     dom = createTextNode(virtualNode.props.__value);
     virtualNode.realDOM = dom;
@@ -171,6 +171,10 @@ export function renderVirtualNode(virtualNode: LXVirtualDOMType, fatherDOM: HTML
       renderVirtualNode(virtualItem, dom);
     });
     virtualNode.realDOM = dom;
+  }
+
+  if(ref) {
+    ref.current = dom;
   }
 
   fatherDOM.appendChild(dom);
@@ -464,7 +468,7 @@ function isStatic(element: LXReactElementType, hasStaticFather: boolean) {
 export function initVirtualDOM(element: LXReactElementType, hasStaticFather = false): LXVirtualDOMType {
   const fatherStatic = isStatic(element, hasStaticFather);
   const genNode = (fatherVirtual: LXVirtualDOMType, elementItem: LXReactElementType, hasStaticFather = false) => {
-    const { component, props, children } = elementItem;
+    const { component, props, children, ref } = elementItem;
     const nodeStatic = isStatic(elementItem, hasStaticFather);
     let virtualNode;
     
@@ -497,6 +501,9 @@ export function initVirtualDOM(element: LXReactElementType, hasStaticFather = fa
       childVirtualNode.father = virtualNode;
       virtualNode.children = [ childVirtualNode ];
       if(instance) {
+        if(ref) {
+          ref.current = instance;
+        }
         instance.virtualNode = virtualNode;
         instance.forceUpdate = () => { 
           updateClassComponent(instance) 
@@ -524,6 +531,5 @@ export function initVirtualDOM(element: LXReactElementType, hasStaticFather = fa
 
 export function render(Component: LXComponentClass, root: HTMLElement) {
   globalVirtualDOM = initVirtualDOM(lxCreateElement(Component, {}, {}));
-  console.log("globalVirtualDOM", globalVirtualDOM);
-  renderVirtualNode(globalVirtualDOM, root)
+  renderVirtualNode(globalVirtualDOM, root);
 }

@@ -36,6 +36,7 @@ __export2(LXReact_exports, {
   LXComponent: () => LXComponent,
   LXPurComponent: () => LXPurComponent,
   createLXContext: () => createLXContext,
+  createLXRef: () => createLXRef,
   lxCreateElement: () => lxCreateElement
 });
 var LXComponent = class {
@@ -90,7 +91,8 @@ function lxCreateElement(elementType, props, ...children) {
           children: [],
           props: {__value: item},
           name: "text",
-          key: null
+          key: null,
+          ref: null
         };
       }
       if (Array.isArray(item)) {
@@ -104,13 +106,15 @@ function lxCreateElement(elementType, props, ...children) {
   };
   const finalProps = props || {};
   const key = (finalProps == null ? void 0 : finalProps.key) || null;
+  const ref = (finalProps == null ? void 0 : finalProps.ref) || null;
   delete finalProps["key"];
   const element = {
     component: elementType,
     props: finalProps,
     children: formatChildren(children).flat(),
     name: typeof elementType === "function" ? elementType.name : elementType,
-    key
+    key,
+    ref
   };
   return element;
 }
@@ -136,4 +140,9 @@ var createLXContext = () => {
     Consumer
   };
 };
+function createLXRef() {
+  return {
+    current: null
+  };
+}
 var LXReact_default = LXReact_exports;

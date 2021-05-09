@@ -15,7 +15,8 @@ export function lxCreateElement(
           children: [],
           props: { __value: item },
           name: 'text',
-          key: null
+          key: null,
+          ref: null,
         }
       }
 
@@ -33,6 +34,7 @@ export function lxCreateElement(
 
   const finalProps = props || {};
   const key = finalProps?.key || null;
+  const ref = finalProps?.ref || null;
   delete finalProps['key']
 
   const element = {
@@ -40,7 +42,8 @@ export function lxCreateElement(
     props: finalProps,
     children: formatChildren(children).flat(),
     name: typeof elementType === 'function' ? elementType.name : elementType,
-    key
+    key,
+    ref,
   };
   return element;
 }

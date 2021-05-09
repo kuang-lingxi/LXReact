@@ -10,6 +10,7 @@ export type LXComponentClass = typeof _;
 export interface ComponentAttributeType {
   key?: string;
   style?: object;
+  ref?: { current: any };
 }
 
 export interface LXReactElementType {
@@ -22,6 +23,7 @@ export interface LXReactElementType {
   children: LXReactElementType[],
   name: string;
   key: null | string;
+  ref: null | { current: any };
 }
 
 export interface LXVirtualDOMTypeProps {
@@ -42,6 +44,7 @@ export interface LXVirtualDOMType {
   instance?: any,
   name: string,
   key: null | string;
+  ref: null | {current: any};
   static: boolean;
 }
 
