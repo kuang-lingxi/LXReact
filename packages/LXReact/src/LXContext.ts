@@ -4,6 +4,38 @@ import { LXComponent } from './LXBaseComponent';
 
 export const contextList = [];
 
+export function getContextId({ Provider }) {
+  return Provider.contextId;
+}
+
+export function checkUpdateList({ virtualDOM, value }) {
+  const id = virtualDOM.component.contextId;
+  function recursiveChild({ node, firstProvider }) {
+    let list = [];
+    if(!firstProvider && node.name === CustomComponent.Provider && node.component.contextId === id) {
+      return [];
+    }
+
+    node.context[id].value = value;
+
+    if(node.name === CustomComponent.Consumer && node.component.contextId === id) {
+      list.push(node);
+    }
+  
+    if(node.instance && node.component?.contextType && getContextId(node.component.contextType) === id) {
+      list.push(node);
+    }
+
+    node.children.forEach(item => {
+      list = list.concat(recursiveChild({ node: item, firstProvider: false }));
+    });
+
+    return list;
+  }
+
+  return recursiveChild({ node: virtualDOM, firstProvider: true });
+}
+
 export function setContext({ component, props }) {
   if(component.name === CustomComponent.Provider) {
     const contextId = (component as LXContextComponentClass).contextId;

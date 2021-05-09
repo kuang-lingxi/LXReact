@@ -1,5 +1,5 @@
 import { LXComponent } from "../../LXReact/src/LXBaseComponent";
-import { deleteContext, getContext, LXContextComponentClass, setContext } from "../../LXReact/src/LXContext";
+import { getContextId, checkUpdateList, deleteContext, getContext, LXContextComponentClass, setContext } from "../../LXReact/src/LXContext";
 import { lxCreateElement } from "../../LXReact/src/LXElement";
 import { CustomComponent, LXComponentClass, LXReactElementType, LXVirtualDOMType, Update } from "../../type/Component";
 
@@ -10,6 +10,10 @@ const regexpEvent = /^on([A-Z][a-zA-Z]*$)/;
 const formList = [ 'input', 'select', 'textarea' ];
 
 let updateList: Update[] = [];
+
+let contextUpdateList = [];
+
+let updateContext = false;
 
 export function hasProperty(obj, prop) {
   return Object.prototype.hasOwnProperty.call(obj, prop);
@@ -280,6 +284,25 @@ export function updateVirtualDOM(oldVirtualNode: LXVirtualDOMType, element: LXRe
   if(oldVirtualNode.props === element.props) {
     return oldVirtualNode;
   }
+  if(!updateContext && oldVirtualNode.name === CustomComponent.Provider) {
+    if(oldVirtualNode.props.value !== element.props.value) {
+      contextUpdateList = checkUpdateList({ virtualDOM: oldVirtualNode, value: element.props.value });
+      setTimeout(() => {
+        updateContext = true;
+        contextUpdateList.forEach(item => {
+          if(item.name === CustomComponent.Consumer) {
+            const id = item.component.contextId;
+            item.instance.props = { ...item.instance.props, ...item.context[id] };
+          }else {
+            const id = getContextId(item.component.contextType);
+            item.instance.context = item.context[id].value;
+          }
+          item.instance.forceUpdate();
+        })
+        updateContext = false;
+      }, 0);
+    }
+  }
   const newProps = {
     ...element.props,
     children: element.children,
@@ -298,7 +321,7 @@ export function updateVirtualDOM(oldVirtualNode: LXVirtualDOMType, element: LXRe
   const newVirtualNode = cloneVirtualDOM(oldVirtualNode, element.props);
   // 修改 fatherVirtualDOM 的 child
   replaceChildVirtualDOM(oldVirtualNode, newVirtualNode);
-  const { instance, component } = newVirtualNode;
+  const { instance, component, name } = newVirtualNode;
 
 
   if(instance) {
@@ -308,7 +331,16 @@ export function updateVirtualDOM(oldVirtualNode: LXVirtualDOMType, element: LXRe
     if(!shouldComponentUpdate){
       return newVirtualNode;
     }
-    instance.props = newProps;
+    if(name === CustomComponent.Consumer) {
+      const contextId = (component as LXContextComponentClass).contextId;
+      const value = oldVirtualNode.father.context[contextId as any].value;
+      instance.props = {
+        value,
+        ...newProps,
+      }
+    }else {
+      instance.props = newProps;
+    }
     newVirtualNode.children = [ updateVirtualDOM(newVirtualNode.children[0], instance.render()) ];
     instance.virtualNode = newVirtualNode;
     return newVirtualNode;
@@ -325,13 +357,15 @@ export function updateVirtualDOM(oldVirtualNode: LXVirtualDOMType, element: LXRe
     const elementChild = element.children[oldChildIndex];
     if(elementChild && childName === elementChild.name && childKey === elementChild.key) {
       const childVirtualNode = updateVirtualDOM(child, elementChild);
-      if(!child.static) {
-        updateList.push({
-          type: 'update',
-          newVirtualDOM: childVirtualNode,
-        });
+      if(childVirtualNode !== child) {
+        if(!child.static) {
+          updateList.push({
+            type: 'update',
+            newVirtualDOM: childVirtualNode,
+          });
+        }
+        newVirtualNode.children[oldChildIndex] = childVirtualNode;
       }
-      newVirtualNode.children[oldChildIndex] = childVirtualNode;
     }else {
       break;
     }
@@ -390,14 +424,17 @@ export function updateVirtualDOM(oldVirtualNode: LXVirtualDOMType, element: LXRe
     const { key, name } = node;
     if(childMap.has(key) && childMap.get(key).name === name) {
       // 能找到就放进来
-      let virtualDOM = childMap.get(key);
-      virtualDOM = updateVirtualDOM(virtualDOM, node);
-      newVirtualNode.children.push(virtualDOM);
-      childMap.delete(key);
-      updateList.push({
-        type: 'listUpdate',
-        newVirtualDOM: virtualDOM
-      });
+      const childVirtualNode = childMap.get(key);
+      const newChildVirtualNode = updateVirtualDOM(childVirtualNode, node);
+      if(newChildVirtualNode !== childVirtualNode) {
+        newVirtualNode.children.push(childVirtualNode);
+        childMap.delete(key);
+        updateList.push({
+          type: 'listUpdate',
+          newVirtualDOM: childVirtualNode
+        });
+      }
+
     }else {
       // 找不到直接新建
       const childVirtualNode = initVirtualDOM(node, newVirtualNode.static);
