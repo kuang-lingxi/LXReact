@@ -1,9 +1,14 @@
+/* eslint-disable no-unused-vars */
+/* eslint-disable no-import-assign */
 import { LXComponent } from "../../LXReact/src/LXBaseComponent";
 import { getContextId, checkUpdateList, deleteContext, getContext, LXContextComponentClass, setContext } from "../../LXReact/src/LXContext";
 import { lxCreateElement } from "../../LXReact/src/LXElement";
-import { CustomComponent, LXComponentClass, LXReactElementType, LXVirtualDOMType, Update } from "../../type/Component";
+import { nowElement } from "../../LXReact/src/LXHooks";
+import { CustomComponent, LXComponentClass, LXReactElementType, LXVirtualDOMType, PhaseEnum, Update } from "../../type/Component";
 
 export let globalVirtualDOM = null;
+
+export let phase: PhaseEnum = PhaseEnum.FREE;
 
 const regexpEvent = /^on([A-Z][a-zA-Z]*$)/;
 
@@ -14,6 +19,7 @@ let updateList: Update[] = [];
 let contextUpdateList = [];
 
 let updateContext = false;
+
 
 export function hasProperty(obj, prop) {
   return Object.prototype.hasOwnProperty.call(obj, prop);

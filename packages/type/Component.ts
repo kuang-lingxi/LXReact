@@ -1,8 +1,22 @@
+/* eslint-disable no-unused-vars */
 import { LXComponent } from "../LXReact/src/LXBaseComponent";
 import { LXContextComponentClass } from "../LXReact/src/LXContext";
 
 class _ extends LXComponent {
   render(){}
+}
+
+type StateHook = {
+  name: string;
+  state: any;
+  setState: Function;
+}
+
+export enum PhaseEnum {
+  INIT = 'init',
+  UPDATE = 'update',
+  COMMIT = 'commit',
+  FREE = 'free',
 }
 
 export type LXComponentClass = typeof _;
@@ -24,6 +38,7 @@ export interface LXReactElementType {
   name: string;
   key: null | string;
   ref: null | { current: any };
+  hooksList?: (StateHook)[];
 }
 
 export interface LXVirtualDOMTypeProps {
@@ -46,6 +61,7 @@ export interface LXVirtualDOMType {
   key: null | string;
   ref: null | {current: any};
   static: boolean;
+  hooksList?: (StateHook)[];
 }
 
 export interface Update {

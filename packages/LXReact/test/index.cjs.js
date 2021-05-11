@@ -37,6 +37,7 @@ __export2(LXReact_exports, {
   LXPurComponent: () => LXPurComponent,
   createLXContext: () => createLXContext,
   createLXRef: () => createLXRef,
+  initHooks: () => initHooks,
   lxCreateElement: () => lxCreateElement
 });
 var LXComponent = class {
@@ -145,4 +146,30 @@ function createLXRef() {
     current: null
   };
 }
+var globalVirtualDOM = null;
+var nowVirtualDOM = globalVirtualDOM;
+var hookIndex = 0;
+var HooksName = {
+  STATE: "state"
+};
+var initHooks = {
+  useLXState: (initState) => {
+    let data = null;
+    if (typeof initState === "function") {
+      data = initState();
+    } else {
+      data = initState;
+    }
+    function getSetState(nowVirtualDOM2) {
+      const hook = nowVirtualDOM2.hooksList[hookIndex];
+      if (hook.name !== HooksName.STATE) {
+        throw Error("hooks must be used in top function");
+      }
+      return (newValue) => {
+        hook.state = newValue;
+      };
+    }
+    return [data, getSetState(nowVirtualDOM)];
+  }
+};
 var LXReact_default = LXReact_exports;
