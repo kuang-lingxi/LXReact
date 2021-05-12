@@ -1,6 +1,5 @@
-import { CustomComponent } from "../../type/Component"
+import { CustomComponent, LXContextComponent, LXContextComponentClass } from "../../type/Component"
 import { lxCreateElement } from "./LXElement"
-import { LXComponent } from './LXBaseComponent';
 
 export const contextList = [];
 
@@ -72,15 +71,7 @@ export function hasContext({ component }) {
 }
 
 
-export abstract class LXContextComponent extends LXComponent {
-  static contextId: Symbol;
-}
 
-class _ extends LXContextComponent {
-  render(){}
-}
-
-export type LXContextComponentClass = typeof _;
 
 export const createLXContext = () => {
   const id = Symbol('lxContext');

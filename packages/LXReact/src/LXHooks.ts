@@ -1,15 +1,5 @@
-import { phase } from "../../LXReactDOM/src/LXRender";
-import { LXReactElementType, LXVirtualDOMType, PhaseEnum } from "../../type/Component";
-
-export let nowElement: LXReactElementType = null;
-
-export let nowVirtualDOM: LXVirtualDOMType = null;
-
-export let hookIndex = 0;
-
-export const HooksName = {
-  STATE: 'state',
-}
+import { share } from "../../LXShare";
+import { HooksName, PhaseEnum } from "../../type/Component";
 
 const initHooks = {
   useLXState: (initState: any) => {
@@ -18,10 +8,6 @@ const initHooks = {
       state = initState();
     }else {
       state = initState
-    }
-
-    if(!Object.prototype.hasOwnProperty.call(nowElement, 'hooksList')) {
-      nowElement.hooksList = [];
     }
 
     const hook = {
@@ -36,8 +22,16 @@ const initHooks = {
 
     hook.setState = setState;
 
-    nowElement.hooksList.push(hook)
+    const { hooksIndex, hooksList } = share.getState();
 
+    const newList = [ ...hooksList ];
+
+    newList.push(hook);
+
+    share.setState({
+      hooksList: newList,
+      hooksIndex: hooksIndex+1,
+    });
     return [ state, setState ];
   }
 }
@@ -46,10 +40,17 @@ const initHooks = {
 const updateHooks = {
   // eslint-disable-next-line no-unused-vars
   useLXState: (_unused: any) => {
-    const hook = nowVirtualDOM.hooksList[hookIndex];
+    const { hooksIndex, hooksList } = share.getState();
+
+    const hook = hooksList[hooksIndex];
+
     if(hook.name !== HooksName.STATE) {
       throw Error('hooks must be used in top function');
     }
+
+    share.setState({
+      hooksIndex: hooksIndex+1,
+    });
 
     return [
       hook.state,
@@ -70,11 +71,12 @@ const updateHooks = {
 
 function useHook(name: keyof typeof initHooks) {
   return (...rest) => {
+    const { phase } = share.getState();
     if(phase === PhaseEnum.INIT) {
-      return initHooks[name](rest);
+      return initHooks[name].apply(null, rest);
     }
 
-    return updateHooks[name](rest);
+    return updateHooks[name].apply(null, rest);
   }
 }
 

@@ -1,14 +1,12 @@
 /* eslint-disable no-unused-vars */
 /* eslint-disable no-import-assign */
 import { LXComponent } from "../../LXReact/src/LXBaseComponent";
-import { getContextId, checkUpdateList, deleteContext, getContext, LXContextComponentClass, setContext } from "../../LXReact/src/LXContext";
+import { getContextId, checkUpdateList, deleteContext, getContext, setContext } from "../../LXReact/src/LXContext";
 import { lxCreateElement } from "../../LXReact/src/LXElement";
-import { nowElement } from "../../LXReact/src/LXHooks";
-import { CustomComponent, LXComponentClass, LXReactElementType, LXVirtualDOMType, PhaseEnum, Update } from "../../type/Component";
+import { share } from "../../LXShare";
+import { CustomComponent, LXComponentClass, LXContextComponentClass, LXReactElementType, LXVirtualDOMType, PhaseEnum, Update } from "../../type/Component";
 
-export let globalVirtualDOM = null;
-
-export let phase: PhaseEnum = PhaseEnum.FREE;
+let globalVirtualDOM = null;
 
 const regexpEvent = /^on([A-Z][a-zA-Z]*$)/;
 
@@ -491,6 +489,7 @@ export function initVirtualDOM(element: LXReactElementType, hasStaticFather = fa
       if(instance) {
         instance.componentWillMount();
       }
+      const { hooksList } = share.getState();
       virtualNode = {
         key: null,
         ...elementItem,
@@ -500,8 +499,13 @@ export function initVirtualDOM(element: LXReactElementType, hasStaticFather = fa
         static: nodeStatic,
         context: {
           ...getContext(),
-        }
+        },
+        hooksList
       }
+      share.setState({
+        hooksList: [],
+        hooksIndex: 0,
+      });
       const childVirtualNode = initVirtualDOM(element, nodeStatic);
       deleteContext({ component });
       childVirtualNode.father = virtualNode;
@@ -528,14 +532,23 @@ export function initVirtualDOM(element: LXReactElementType, hasStaticFather = fa
       }
       virtualNode.children = elementItem.children.map(item => genNode(virtualNode, item, nodeStatic));
     }
-
     return virtualNode;
   }
 
-  return genNode(null, element, fatherStatic);
+  share.setState({
+    phase: PhaseEnum.INIT
+  });
+  const res =  genNode(null, element, fatherStatic);
+
+  // share.setState({
+  //   phase: PhaseEnum.FREE,
+  // });
+
+  return res;
 }
 
 export function render(Component: LXComponentClass, root: HTMLElement) {
   globalVirtualDOM = initVirtualDOM(lxCreateElement(Component, {}, {}));
+  console.log("globalVirtualDOM", globalVirtualDOM);
   renderVirtualNode(globalVirtualDOM, root);
 }

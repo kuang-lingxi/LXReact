@@ -37,10 +37,20 @@ __export2(LXReact_exports, {
   LXPurComponent: () => LXPurComponent,
   createLXContext: () => createLXContext,
   createLXRef: () => createLXRef,
-  initHooks: () => initHooks,
-  lxCreateElement: () => lxCreateElement
+  lxCreateElement: () => lxCreateElement,
+  useLXState: () => useLXState
 });
-var LXComponent = class {
+var PhaseEnum;
+(function(PhaseEnum2) {
+  PhaseEnum2["INIT"] = "init";
+  PhaseEnum2["UPDATE"] = "update";
+  PhaseEnum2["COMMIT"] = "commit";
+  PhaseEnum2["FREE"] = "free";
+})(PhaseEnum || (PhaseEnum = {}));
+var HooksName = {
+  STATE: "state"
+};
+var LXComponentAbstract = class {
   constructor(props) {
     this.props = props;
     this.setState.bind(this);
@@ -65,18 +75,8 @@ var LXComponent = class {
   componentDidUpdate() {
   }
 };
-LXComponent.isComponent = true;
-var LXPurComponent = class extends LXComponent {
-  shouldComponentUpdate(nextProps, nextState) {
-    return true;
-  }
-  render() {
-  }
-};
-var Fragment = class extends LXComponent {
-  render() {
-    return lxCreateElement(CustomComponent.Fragment, null, this.props.children);
-  }
+LXComponentAbstract.isComponent = true;
+var LXContextComponent = class extends LXComponentAbstract {
 };
 var CustomComponent = {
   Fragment: "Fragment",
@@ -119,8 +119,6 @@ function lxCreateElement(elementType, props, ...children) {
   };
   return element;
 }
-var LXContextComponent = class extends LXComponent {
-};
 var createLXContext = () => {
   const id = Symbol("lxContext");
   class Provider extends LXContextComponent {
@@ -141,35 +139,100 @@ var createLXContext = () => {
     Consumer
   };
 };
+var LXComponent = class extends LXComponentAbstract {
+  render() {
+  }
+};
+var LXPurComponent = class extends LXComponent {
+  shouldComponentUpdate(nextProps, nextState) {
+    return true;
+  }
+  render() {
+  }
+};
+var Fragment = class extends LXComponent {
+  render() {
+    return lxCreateElement(CustomComponent.Fragment, null, this.props.children);
+  }
+};
 function createLXRef() {
   return {
     current: null
   };
 }
-var globalVirtualDOM = null;
-var nowVirtualDOM = globalVirtualDOM;
-var hookIndex = 0;
-var HooksName = {
-  STATE: "state"
-};
-var initHooks = {
-  useLXState: (initState) => {
-    let data = null;
-    if (typeof initState === "function") {
-      data = initState();
-    } else {
-      data = initState;
+var LXShare = class {
+  constructor() {
+    this.state = {
+      phase: PhaseEnum.INIT,
+      hooksList: [],
+      hooksIndex: 0
+    };
+  }
+  setState(data) {
+    if (Object.prototype.toString.call(data) !== "[object Object]") {
+      throw Error("data must be a object");
     }
-    function getSetState(nowVirtualDOM2) {
-      const hook = nowVirtualDOM2.hooksList[hookIndex];
-      if (hook.name !== HooksName.STATE) {
-        throw Error("hooks must be used in top function");
-      }
-      return (newValue) => {
-        hook.state = newValue;
-      };
-    }
-    return [data, getSetState(nowVirtualDOM)];
+    this.state = __assign(__assign({}, this.state), data);
+  }
+  getState() {
+    return this.state;
   }
 };
+var share = new LXShare();
+var initHooks = {
+  useLXState: (initState) => {
+    let state = null;
+    if (typeof initState === "function") {
+      state = initState();
+    } else {
+      state = initState;
+    }
+    const hook = {
+      name: HooksName.STATE,
+      state,
+      setState: null
+    };
+    const setState = (newState) => {
+      hook.state = newState;
+    };
+    hook.setState = setState;
+    const {hooksIndex, hooksList} = share.getState();
+    const newList = [...hooksList];
+    newList.push(hook);
+    share.setState({
+      hooksList: newList,
+      hooksIndex: hooksIndex + 1
+    });
+    return [state, setState];
+  }
+};
+var updateHooks = {
+  useLXState: (_unused) => {
+    const {hooksIndex, hooksList} = share.getState();
+    const hook = hooksList[hooksIndex];
+    if (hook.name !== HooksName.STATE) {
+      throw Error("hooks must be used in top function");
+    }
+    share.setState({
+      hooksIndex: hooksIndex + 1
+    });
+    return [
+      hook.state,
+      hook.setState
+    ];
+  }
+};
+function useHook(name) {
+  return (...rest) => {
+    const {phase} = share.getState();
+    if (phase === PhaseEnum.INIT) {
+      return initHooks[name].apply(null, rest);
+    }
+    return updateHooks[name].apply(null, rest);
+  };
+}
+var hooks = {
+  useLXState: useHook("useLXState")
+};
+var {useLXState} = hooks;
 var LXReact_default = LXReact_exports;

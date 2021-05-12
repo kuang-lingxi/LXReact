@@ -1,17 +1,4 @@
 /* eslint-disable no-unused-vars */
-import { LXComponent } from "../LXReact/src/LXBaseComponent";
-import { LXContextComponentClass } from "../LXReact/src/LXContext";
-
-class _ extends LXComponent {
-  render(){}
-}
-
-type StateHook = {
-  name: string;
-  state: any;
-  setState: Function;
-}
-
 export enum PhaseEnum {
   INIT = 'init',
   UPDATE = 'update',
@@ -19,7 +6,73 @@ export enum PhaseEnum {
   FREE = 'free',
 }
 
-export type LXComponentClass = typeof _;
+export const HooksName = {
+  STATE: 'state',
+}
+
+export abstract class LXComponentAbstract {
+  static isComponent = true;
+  static contextType;
+  public props;
+  public state;
+  public context;
+  public virtualNode: LXVirtualDOMType;
+  constructor(props) {
+    this.props = props;
+    this.setState.bind(this);
+  }
+  forceUpdate() {
+    
+  }
+  setState(state) {
+    this.state = {
+      ...this.state,
+      ...state
+    };
+    this.forceUpdate();
+  }
+
+  // 挂载生命周期
+  componentWillMount() {}
+  componentDidMount() {}
+
+  // 更新生命周期
+  componentWillReceiveProps(nextProps) {}
+  shouldComponentUpdate(nextProps, nextState) {
+    return true;
+  }
+  abstract render(): any;
+  componentWillUpdate() {}
+  componentDidUpdate() {}
+
+  //卸载
+  // componentWillUnmount() {}
+
+}
+class _Component extends LXComponentAbstract {
+  render(){}
+}
+
+export type LXComponentClass = typeof _Component;
+
+export abstract class LXContextComponent extends LXComponentAbstract {
+  static contextId: Symbol;
+}
+
+class _Context extends LXContextComponent {
+  render(){}
+}
+
+export type LXContextComponentClass = typeof _Context;
+
+
+type StateHook = {
+  name: string;
+  state: any;
+  setState: Function;
+}
+
+export type HooksListType = (StateHook)[];
 
 export interface ComponentAttributeType {
   key?: string;
@@ -38,7 +91,6 @@ export interface LXReactElementType {
   name: string;
   key: null | string;
   ref: null | { current: any };
-  hooksList?: (StateHook)[];
 }
 
 export interface LXVirtualDOMTypeProps {
@@ -61,7 +113,7 @@ export interface LXVirtualDOMType {
   key: null | string;
   ref: null | {current: any};
   static: boolean;
-  hooksList?: (StateHook)[];
+  hooksList?: HooksListType;
 }
 
 export interface Update {
