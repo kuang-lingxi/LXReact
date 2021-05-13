@@ -6,7 +6,7 @@ export function lxCreateElement(
   ...children
 ): LXReactElementType {
   const formatChildren = (child = []) => {
-    return child.map((item, index) => {
+    return child.map((item) => {
 
       if(typeof item === 'string' || typeof item === 'number') {
         return {
@@ -18,28 +18,23 @@ export function lxCreateElement(
           ref: null,
         }
       }
-
-      if(Array.isArray(item)) {
-        item.forEach((itemChild, childIndex) => {
-          itemChild.key = itemChild.key || `${index}-${childIndex}`;
+      if(Array.isArray(item) && !(item as any)?.isChildren) {
+        item.forEach((itemChild, index) => {
+          itemChild.key = ('key' in itemChild && itemChild.key !== null) ? itemChild.key : index;
         })
       }
-
-      item.key = item.key || index;
 
       return item;
     })
   }
-
   const finalProps = props || {};
-  const key = finalProps?.key || null;
-  const ref = finalProps?.ref || null;
+  const key = ('key' in finalProps) ? finalProps.key : null;
+  const ref = ('ref' in finalProps ) ? finalProps.ref : null;
   delete finalProps['key']
-
   const element = {
     component: elementType,
     props: finalProps,
-    children: formatChildren(children).flat(),
+    children: formatChildren([ ...children ]).flat(),
     name: typeof elementType === 'function' ? elementType.name : elementType,
     key,
     ref,

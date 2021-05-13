@@ -120,7 +120,8 @@ var PhaseEnum2;
   PhaseEnum22["FREE"] = "free";
 })(PhaseEnum2 || (PhaseEnum2 = {}));
 var HooksName = {
-  STATE: "state"
+  STATE: "state",
+  EFFECT: "effect"
 };
 var LXComponentAbstract2 = class {
   constructor(props) {
@@ -157,7 +158,7 @@ var CustomComponent = {
 };
 function lxCreateElement(elementType, props, ...children) {
   const formatChildren = (child = []) => {
-    return child.map((item, index) => {
+    return child.map((item) => {
       if (typeof item === "string" || typeof item === "number") {
         return {
           component: "text",
@@ -168,23 +169,22 @@ function lxCreateElement(elementType, props, ...children) {
           ref: null
         };
       }
-      if (Array.isArray(item)) {
-        item.forEach((itemChild, childIndex) => {
-          itemChild.key = itemChild.key || `${index}-${childIndex}`;
+      if (Array.isArray(item) && !(item == null ? void 0 : item.isChildren)) {
+        item.forEach((itemChild, index) => {
+          itemChild.key = "key" in itemChild && itemChild.key !== null ? itemChild.key : index;
         });
       }
-      item.key = item.key || index;
       return item;
     });
   };
   const finalProps = props || {};
-  const key = (finalProps == null ? void 0 : finalProps.key) || null;
-  const ref = (finalProps == null ? void 0 : finalProps.ref) || null;
+  const key = "key" in finalProps ? finalProps.key : null;
+  const ref = "ref" in finalProps ? finalProps.ref : null;
   delete finalProps["key"];
   const element = {
     component: elementType,
     props: finalProps,
-    children: formatChildren(children).flat(),
+    children: formatChildren([...children]).flat(),
     name: typeof elementType === "function" ? elementType.name : elementType,
     key,
     ref
@@ -232,6 +232,27 @@ function createLXRef() {
     current: null
   };
 }
+function isArrayEqual(arr1, arr2) {
+  if (!Array.isArray(arr1) || !Array.isArray(arr2)) {
+    return false;
+  }
+  if (arr1.length !== arr2.length) {
+    return false;
+  }
+  arr1.forEach((item1, index) => {
+    const item2 = arr2[index];
+    return Object.is(item1, item2);
+  });
+}
+function setHook(hook) {
+  const {hooksIndex, hooksList} = share.getState();
+  const newList = [...hooksList];
+  newList.push(hook);
+  share.setState({
+    hooksList: newList,
+    hooksIndex: hooksIndex + 1
+  });
+}
 var initHooks = {
   useLXState: (initState) => {
     let state = null;
@@ -249,14 +270,19 @@ var initHooks = {
       hook.state = newState;
     };
     hook.setState = setState;
-    const {hooksIndex, hooksList} = share.getState();
-    const newList = [...hooksList];
-    newList.push(hook);
-    share.setState({
-      hooksList: newList,
-      hooksIndex: hooksIndex + 1
-    });
+    setHook(hook);
     return [state, setState];
+  },
+  useLXEffect: (func, deps = []) => {
+    const destroy = func();
+    const hook = {
+      name: HooksName.STATE,
+      func,
+      deps,
+      destroy: destroy || (() => {
+      })
+    };
+    setHook(hook);
   }
 };
 var updateHooks = {
@@ -273,6 +299,23 @@ var updateHooks = {
       hook.state,
       hook.setState
     ];
+  },
+  useLXEffect: (func, deps = []) => {
+    const {hooksIndex, hooksList} = share.getState();
+    const oldHook = hooksList[hooksIndex];
+    const {deps: oldDeps} = oldHook;
+    if (!isArrayEqual(oldDeps, deps)) {
+      oldHook.destroy();
+      const destroy = func();
+      const hook = {
+        name: HooksName.STATE,
+        func,
+        deps,
+        destroy: destroy || (() => {
+        })
+      };
+      hooksList.splice(hooksIndex, 1, hook);
+    }
   }
 };
 function useHook(name) {

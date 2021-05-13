@@ -471,6 +471,7 @@ export function initVirtualDOM(element: LXReactElementType, hasStaticFather = fa
   const fatherStatic = isStatic(element, hasStaticFather);
   const genNode = (fatherVirtual: LXVirtualDOMType, elementItem: LXReactElementType, hasStaticFather = false) => {
     const { component, props, children, ref } = elementItem;
+    (children as any).isChildren = true;
     const nodeStatic = isStatic(elementItem, hasStaticFather);
     let virtualNode;
     
@@ -543,6 +544,7 @@ export function render(Component: LXComponentClass, root: HTMLElement) {
     phase: PhaseEnum.INIT
   });
   globalVirtualDOM = initVirtualDOM(lxCreateElement(Component, {}, {}));
+  console.log("globalVirtualDOM", globalVirtualDOM);
   share.setState({
     phase: PhaseEnum.COMMIT
   });
