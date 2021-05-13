@@ -10,6 +10,8 @@ __markAsModule(exports);
 __export(exports, {
   default: () => LXReact_default
 });
+
+// ../LXReact/packages/LXShare/dist/index.js
 var __defProp2 = Object.defineProperty;
 var __hasOwnProp = Object.prototype.hasOwnProperty;
 var __getOwnPropSymbols = Object.getOwnPropertySymbols;
@@ -26,30 +28,13 @@ var __assign = (a, b) => {
     }
   return a;
 };
-var __export2 = (target, all) => {
-  for (var name in all)
-    __defProp2(target, name, {get: all[name], enumerable: true});
-};
-var LXReact_exports = {};
-__export2(LXReact_exports, {
-  Fragment: () => Fragment,
-  LXComponent: () => LXComponent,
-  LXPurComponent: () => LXPurComponent,
-  createLXContext: () => createLXContext,
-  createLXRef: () => createLXRef,
-  lxCreateElement: () => lxCreateElement,
-  useLXState: () => useLXState
-});
 var PhaseEnum;
-(function(PhaseEnum2) {
-  PhaseEnum2["INIT"] = "init";
-  PhaseEnum2["UPDATE"] = "update";
-  PhaseEnum2["COMMIT"] = "commit";
-  PhaseEnum2["FREE"] = "free";
+(function(PhaseEnum22) {
+  PhaseEnum22["INIT"] = "init";
+  PhaseEnum22["UPDATE"] = "update";
+  PhaseEnum22["COMMIT"] = "commit";
+  PhaseEnum22["FREE"] = "free";
 })(PhaseEnum || (PhaseEnum = {}));
-var HooksName = {
-  STATE: "state"
-};
 var LXComponentAbstract = class {
   constructor(props) {
     this.props = props;
@@ -76,7 +61,94 @@ var LXComponentAbstract = class {
   }
 };
 LXComponentAbstract.isComponent = true;
-var LXContextComponent = class extends LXComponentAbstract {
+var LXShare = class {
+  constructor() {
+    this.state = {
+      phase: PhaseEnum.FREE,
+      hooksList: [],
+      hooksIndex: 0
+    };
+  }
+  setState(data) {
+    if (Object.prototype.toString.call(data) !== "[object Object]") {
+      throw Error("data must be a object");
+    }
+    this.state = __assign(__assign({}, this.state), data);
+  }
+  getState() {
+    return this.state;
+  }
+};
+var share = new LXShare();
+
+// packages/LXReact/dist/index.js
+var __defProp3 = Object.defineProperty;
+var __hasOwnProp2 = Object.prototype.hasOwnProperty;
+var __getOwnPropSymbols2 = Object.getOwnPropertySymbols;
+var __propIsEnum2 = Object.prototype.propertyIsEnumerable;
+var __defNormalProp2 = (obj, key, value) => key in obj ? __defProp3(obj, key, {enumerable: true, configurable: true, writable: true, value}) : obj[key] = value;
+var __assign2 = (a, b) => {
+  for (var prop in b || (b = {}))
+    if (__hasOwnProp2.call(b, prop))
+      __defNormalProp2(a, prop, b[prop]);
+  if (__getOwnPropSymbols2)
+    for (var prop of __getOwnPropSymbols2(b)) {
+      if (__propIsEnum2.call(b, prop))
+        __defNormalProp2(a, prop, b[prop]);
+    }
+  return a;
+};
+var __export2 = (target, all) => {
+  for (var name in all)
+    __defProp3(target, name, {get: all[name], enumerable: true});
+};
+var LXReact_exports = {};
+__export2(LXReact_exports, {
+  Fragment: () => Fragment,
+  LXComponent: () => LXComponent,
+  LXPurComponent: () => LXPurComponent,
+  createLXContext: () => createLXContext,
+  createLXRef: () => createLXRef,
+  lxCreateElement: () => lxCreateElement,
+  useLXState: () => useLXState
+});
+var PhaseEnum2;
+(function(PhaseEnum22) {
+  PhaseEnum22["INIT"] = "init";
+  PhaseEnum22["UPDATE"] = "update";
+  PhaseEnum22["COMMIT"] = "commit";
+  PhaseEnum22["FREE"] = "free";
+})(PhaseEnum2 || (PhaseEnum2 = {}));
+var HooksName = {
+  STATE: "state"
+};
+var LXComponentAbstract2 = class {
+  constructor(props) {
+    this.props = props;
+    this.setState.bind(this);
+  }
+  forceUpdate() {
+  }
+  setState(state) {
+    this.state = __assign2(__assign2({}, this.state), state);
+    this.forceUpdate();
+  }
+  componentWillMount() {
+  }
+  componentDidMount() {
+  }
+  componentWillReceiveProps(nextProps) {
+  }
+  shouldComponentUpdate(nextProps, nextState) {
+    return true;
+  }
+  componentWillUpdate() {
+  }
+  componentDidUpdate() {
+  }
+};
+LXComponentAbstract2.isComponent = true;
+var LXContextComponent = class extends LXComponentAbstract2 {
 };
 var CustomComponent = {
   Fragment: "Fragment",
@@ -139,7 +211,7 @@ var createLXContext = () => {
     Consumer
   };
 };
-var LXComponent = class extends LXComponentAbstract {
+var LXComponent = class extends LXComponentAbstract2 {
   render() {
   }
 };
@@ -160,25 +232,6 @@ function createLXRef() {
     current: null
   };
 }
-var LXShare = class {
-  constructor() {
-    this.state = {
-      phase: PhaseEnum.INIT,
-      hooksList: [],
-      hooksIndex: 0
-    };
-  }
-  setState(data) {
-    if (Object.prototype.toString.call(data) !== "[object Object]") {
-      throw Error("data must be a object");
-    }
-    this.state = __assign(__assign({}, this.state), data);
-  }
-  getState() {
-    return this.state;
-  }
-};
-var share = new LXShare();
 var initHooks = {
   useLXState: (initState) => {
     let state = null;
@@ -225,7 +278,7 @@ var updateHooks = {
 function useHook(name) {
   return (...rest) => {
     const {phase} = share.getState();
-    if (phase === PhaseEnum.INIT) {
+    if (phase === PhaseEnum2.INIT) {
       return initHooks[name].apply(null, rest);
     }
     return updateHooks[name].apply(null, rest);

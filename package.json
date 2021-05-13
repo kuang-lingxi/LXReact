@@ -1,9 +1,10 @@
 {
   "type": "module",
   "scripts": {
-    "build": "yarn build:LXReact && yarn build:LXReactDOM && yarn test",
-    "build:LXReact": "esbuild packages/LXReact/index.ts --outfile=packages/LXReact/dist/index.js --bundle --format=esm --target=es6",
-    "build:LXReactDOM": "esbuild packages/LXReactDOM/index.ts --outfile=packages/LXReactDOM/dist/index.js --bundle --format=esm --target=es6",
+    "build": "yarn build:LXShare && yarn build:LXReact && yarn build:LXReactDOM && yarn test",
+    "build:LXReact": "esbuild packages/LXReact/index.ts --outfile=packages/LXReact/dist/index.js --bundle --format=esm --target=es6 --external:lx-react-share",
+    "build:LXReactDOM": "esbuild packages/LXReactDOM/index.ts --outfile=packages/LXReactDOM/dist/index.js --bundle --format=esm --target=es6 --external:lx-react-share",
+    "build:LXShare": "esbuild packages/LXShare/index.ts --outfile=packages/LXShare/dist/index.js --bundle --format=esm --target=es6",
     "test": "esbuild packages/LXReact/dist/index.js --outfile=packages/LXReact/test/index.cjs.js --bundle --format=cjs && jest"
   },
   "devDependencies": {

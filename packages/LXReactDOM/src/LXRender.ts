@@ -1,9 +1,7 @@
-/* eslint-disable no-unused-vars */
-/* eslint-disable no-import-assign */
 import { LXComponent } from "../../LXReact/src/LXBaseComponent";
 import { getContextId, checkUpdateList, deleteContext, getContext, setContext } from "../../LXReact/src/LXContext";
 import { lxCreateElement } from "../../LXReact/src/LXElement";
-import { share } from "../../LXShare";
+import { share } from "lx-react-share";
 import { CustomComponent, LXComponentClass, LXContextComponentClass, LXReactElementType, LXVirtualDOMType, PhaseEnum, Update } from "../../type/Component";
 
 let globalVirtualDOM = null;
@@ -535,20 +533,21 @@ export function initVirtualDOM(element: LXReactElementType, hasStaticFather = fa
     return virtualNode;
   }
 
-  share.setState({
-    phase: PhaseEnum.INIT
-  });
   const res =  genNode(null, element, fatherStatic);
-
-  // share.setState({
-  //   phase: PhaseEnum.FREE,
-  // });
 
   return res;
 }
 
 export function render(Component: LXComponentClass, root: HTMLElement) {
+  share.setState({
+    phase: PhaseEnum.INIT
+  });
   globalVirtualDOM = initVirtualDOM(lxCreateElement(Component, {}, {}));
-  console.log("globalVirtualDOM", globalVirtualDOM);
+  share.setState({
+    phase: PhaseEnum.COMMIT
+  });
   renderVirtualNode(globalVirtualDOM, root);
+  share.setState({
+    phase: PhaseEnum.FREE
+  });
 }

@@ -1,4 +1,4 @@
-import { share } from "../../LXShare";
+import { share } from "lx-react-share";
 import { HooksName, PhaseEnum } from "../../type/Component";
 
 const initHooks = {

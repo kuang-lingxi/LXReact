@@ -1,0 +1,17 @@
+{
+  "name": "lx-react-share",
+  "version": "0.1.0",
+  "description": "lx-react-share",
+  "main": "dist/index.js",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "lx-react-dom"
+  ],
+  "author": "kuanglingxi",
+  "license": "ISC"
+}

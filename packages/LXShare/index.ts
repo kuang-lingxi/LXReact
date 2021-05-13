@@ -1,10 +1,10 @@
 import { HooksListType, PhaseEnum } from "../type/Component";
 
 class LXShare {
-  private state = {
-    phase: PhaseEnum.INIT,
+  public state = {
+    phase: PhaseEnum.FREE,
     hooksList: [],
-    hooksIndex: 0
+    hooksIndex: 0,
   } as {
     phase: PhaseEnum,
     hooksList: HooksListType,
