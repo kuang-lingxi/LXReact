@@ -8,6 +8,7 @@ export enum PhaseEnum {
 
 export const HooksName = {
   STATE: 'state',
+  EFFECT: 'effect'
 }
 
 export abstract class LXComponentAbstract {
@@ -66,13 +67,20 @@ class _Context extends LXContextComponent {
 export type LXContextComponentClass = typeof _Context;
 
 
-type StateHook = {
+export type StateHook = {
   name: string;
   state: any;
   setState: Function;
 }
 
-export type HooksListType = (StateHook)[];
+export type EffectHook = {
+  name: string;
+  func: () => Function | void;
+  deps: any[];
+  destroy: Function;
+}
+
+export type HooksListType = (StateHook | EffectHook)[];
 
 export interface ComponentAttributeType {
   key?: string;

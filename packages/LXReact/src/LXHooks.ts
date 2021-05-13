@@ -1,5 +1,34 @@
 import { share } from "lx-react-share";
-import { HooksName, PhaseEnum } from "../../type/Component";
+import { HooksName, PhaseEnum, StateHook, EffectHook } from "../../type/Component";
+
+function isArrayEqual(arr1, arr2) {
+  if(!Array.isArray(arr1) || !Array.isArray(arr2)) {
+    return false;
+  }
+
+  if(arr1.length !== arr2.length) {
+    return false;
+  }
+
+  arr1.forEach((item1, index) => {
+    const item2 = arr2[index];
+
+    return Object.is(item1, item2);
+  })
+}
+
+function setHook(hook) {
+  const { hooksIndex, hooksList } = share.getState();
+
+  const newList = [ ...hooksList ];
+
+  newList.push(hook);
+
+  share.setState({
+    hooksList: newList,
+    hooksIndex: hooksIndex+1,
+  });
+}
 
 const initHooks = {
   useLXState: (initState: any) => {
@@ -22,17 +51,21 @@ const initHooks = {
 
     hook.setState = setState;
 
-    const { hooksIndex, hooksList } = share.getState();
+    setHook(hook);
 
-    const newList = [ ...hooksList ];
-
-    newList.push(hook);
-
-    share.setState({
-      hooksList: newList,
-      hooksIndex: hooksIndex+1,
-    });
     return [ state, setState ];
+  },
+  useLXEffect: (func: () => Function | void, deps = []) => {
+    const destroy = func();
+
+    const hook = {
+      name: HooksName.STATE,
+      func,
+      deps,
+      destroy: destroy || (() => {}),
+    };
+
+    setHook(hook);
   }
 }
 
@@ -42,7 +75,7 @@ const updateHooks = {
   useLXState: (_unused: any) => {
     const { hooksIndex, hooksList } = share.getState();
 
-    const hook = hooksList[hooksIndex];
+    const hook = hooksList[hooksIndex] as StateHook;
 
     if(hook.name !== HooksName.STATE) {
       throw Error('hooks must be used in top function');
@@ -56,6 +89,25 @@ const updateHooks = {
       hook.state,
       hook.setState 
     ];
+  },
+  useLXEffect: (func: () => Function | void, deps = []) => {
+    const { hooksIndex, hooksList } = share.getState();
+
+    const oldHook = hooksList[hooksIndex] as EffectHook;
+
+    const { deps: oldDeps } = oldHook;
+
+    if(!isArrayEqual(oldDeps, deps)) {
+      oldHook.destroy();
+      const destroy = func();
+      const hook = {
+        name: HooksName.STATE,
+        func,
+        deps,
+        destroy: destroy || (() => {}),
+      };
+      hooksList.splice(hooksIndex, 1, hook);
+    }
   }
 }
 // function useEffect() {}
