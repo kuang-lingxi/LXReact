@@ -4,7 +4,7 @@ import { lxCreateElement } from './LXElement';
 import { createLXRef } from './LXRef';
 import { hooks } from './LXHooks';
 
-const { useLXState, useLXEffect } = hooks;
+const { useLXState, useLXEffect, useLXContext } = hooks;
 
 export {
   lxCreateElement,
@@ -12,6 +12,7 @@ export {
   createLXRef,
   useLXState,
   useLXEffect,
+  useLXContext,
   LXComponent,
   LXPurComponent,
   Fragment,

@@ -510,6 +510,11 @@ export function initVirtualDOM(element: LXReactElementType, hasStaticFather = fa
     });
     if(typeof component === 'function') {
       setContext({ component, props });
+      setObjectProps(virtualNode, {
+        context: {
+          ...getContext(),
+        }
+      });
       const { element, instance } = getElement({ 
         elementType: component, 
         props: { 
@@ -529,9 +534,6 @@ export function initVirtualDOM(element: LXReactElementType, hasStaticFather = fa
         children: [],
         instance,
         static: nodeStatic,
-        context: {
-          ...getContext(),
-        },
       });
       if(instance) {
         instance.componentWillMount();

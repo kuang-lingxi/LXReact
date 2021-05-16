@@ -1,6 +1,7 @@
 import { share } from "lx-react-share";
 import { updateFunctionComponent } from "../../LXReactDOM/src/LXRender";
-import { HooksName, PhaseEnum, StateHook, EffectHook } from "../../type/Component";
+import { HooksName, PhaseEnum, StateHook, EffectHook, ContextHook } from "../../type/Component";
+import { getContextId } from "./LXContext";
 
 function isArrayEqual(arr1, arr2) {
   if(!Array.isArray(arr1) || !Array.isArray(arr2)) {
@@ -22,18 +23,11 @@ function isArrayEqual(arr1, arr2) {
   return res;
 }
 
-// function setHook(hook) {
-//   const { hooksIndex, hooksList } = share.getState();
-
-//   const newList = [ ...hooksList ];
-
-//   newList.push(hook);
-
-//   share.setState({
-//     hooksList: newList,
-//     hooksIndex: hooksIndex+1,
-//   });
-// }
+function judgeHookName(actualName: string, name: string) {
+  if(actualName !== name) {
+    throw Error(`get hook ${actualName}, but need hook ${name}`);
+  }
+}
 
 const initHooks = {
   useLXState: (initState: any) => {
@@ -71,7 +65,7 @@ const initHooks = {
     const { virtualDOM } = share.getState();
     const nowVirtualDOM = virtualDOM[0];
     const hook = {
-      name: HooksName.STATE,
+      name: HooksName.EFFECT,
       func,
       deps,
       destroy: destroy || (() => {}),
@@ -82,6 +76,19 @@ const initHooks = {
     }
     nowVirtualDOM.hooksList.push(hook);
     // setHook(hook);
+  },
+  useLXContext: (context) => {
+    const { virtualDOM } = share.getState();
+    const nowVirtualDOM = virtualDOM[0];
+    const hook = {
+      name: HooksName.CONTEXT,
+      context,
+    }
+    nowVirtualDOM.hooksList.push(hook);
+
+    const id = getContextId(context);
+
+    return nowVirtualDOM.context[id].value;
   }
 }
 
@@ -93,9 +100,7 @@ const updateHooks = {
     const nowVirtualDOM = virtualDOM[0];
     const hook = nowVirtualDOM.hooksList[hooksIndex] as StateHook;
 
-    if(hook.name !== HooksName.STATE) {
-      throw Error('hooks must be used in top function');
-    }
+    judgeHookName(hook.name, HooksName.STATE);
 
     return [
       hook.state,
@@ -103,9 +108,11 @@ const updateHooks = {
     ];
   },
   useLXEffect: (func: () => Function | void, deps = []) => {
-    const { hooksIndex, virtualDOM } = share.getState();
+    const { virtualDOM, hooksIndex } = share.getState();
     const nowVirtualDOM = virtualDOM[0];
     const oldHook = nowVirtualDOM.hooksList[hooksIndex] as EffectHook;
+
+    judgeHookName(oldHook.name, HooksName.EFFECT);
 
     const { deps: oldDeps } = oldHook;
 
@@ -113,7 +120,7 @@ const updateHooks = {
       oldHook.destroy();
       const destroy = func();
       const hook = {
-        name: HooksName.STATE,
+        name: HooksName.EFFECT,
         func,
         deps,
         destroy: destroy || (() => {}),
@@ -121,6 +128,16 @@ const updateHooks = {
       };
       nowVirtualDOM.hooksList.splice(hooksIndex, 1, hook);
     }
+  },
+  useLXContext: (context) => {
+    const { virtualDOM, hooksIndex } = share.getState();
+    const nowVirtualDOM = virtualDOM[0];
+    const hook = nowVirtualDOM.hooksList[hooksIndex] as ContextHook;
+
+    judgeHookName(hook.name, HooksName.CONTEXT);
+    
+    const id = getContextId(context);
+    return nowVirtualDOM.context[id].value;
   }
 }
 // function useEffect() {}
@@ -152,5 +169,6 @@ function useHook(name: keyof typeof initHooks) {
 
 export const hooks =  {
   useLXState: useHook('useLXState'),
-  useLXEffect: useHook('useLXEffect')
+  useLXEffect: useHook('useLXEffect'),
+  useLXContext: useHook('useLXContext')
 }
