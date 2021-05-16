@@ -140,8 +140,6 @@ const updateHooks = {
     return nowVirtualDOM.context[id].value;
   }
 }
-// function useEffect() {}
-// function useContext() {}
 
 // function useReducer() {}
 // function useCallback() {}

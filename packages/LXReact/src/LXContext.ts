@@ -1,7 +1,14 @@
 import { CustomComponent, LXContextComponent, LXContextComponentClass } from "../../type/Component"
 import { lxCreateElement } from "./LXElement"
 
-export const contextList = [];
+export let contextList = [];
+
+export function initContext(context) {
+  contextList = []
+  Object.getOwnPropertySymbols(context).forEach(key => {
+    contextList.push({ [key]: context[key] });
+  })
+}
 
 export function getContextId({ Provider }) {
   return Provider.contextId;
@@ -58,7 +65,6 @@ export function getContext() {
       res[contextId] = item[contextId];
     }
   })
-
   return res;
 }
 

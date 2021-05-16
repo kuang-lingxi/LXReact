@@ -207,6 +207,12 @@ function lxCreateElement(elementType, props, ...children) {
   return element;
 }
 var contextList = [];
+function initContext(context) {
+  contextList = [];
+  Object.getOwnPropertySymbols(context).forEach((key) => {
+    contextList.push({[key]: context[key]});
+  });
+}
 function getContextId({Provider}) {
   return Provider.contextId;
 }
@@ -397,11 +403,12 @@ function updateAttribute(dom, oldProps, newProps) {
     }
   });
 }
-function getElement({fatherVirtualDOM, elementType, props}) {
+function getElement({elementType, props}) {
   if (typeof elementType === "function") {
+    const context = getContext();
     if (elementType.name === CustomComponent.Consumer) {
       const contextId = elementType.contextId;
-      const value = fatherVirtualDOM.context[contextId].value;
+      const value = context[contextId].value;
       const instance = new elementType(__assign2({value}, props));
       const element = instance.render();
       return {instance, element};
@@ -411,8 +418,8 @@ function getElement({fatherVirtualDOM, elementType, props}) {
       const instance = new elementType(props);
       if (Object.prototype.hasOwnProperty.call(Object.getPrototypeOf(instance).constructor, "contextType")) {
         const contextId = Object.getPrototypeOf(instance).constructor.contextType.Consumer.contextId;
-        if (Object.prototype.hasOwnProperty.call(fatherVirtualDOM.context, contextId)) {
-          instance.context = fatherVirtualDOM.context[contextId].value;
+        if (Object.prototype.hasOwnProperty.call(context, contextId)) {
+          instance.context = context[contextId].value;
         }
       }
       const element = instance.render();
@@ -483,7 +490,7 @@ function deleteRealDOM(oldVirtualDOM) {
   parentDOM.removeChild(realDOM);
 }
 function insertRealDOM(newVirtualDOM) {
-  const fatherNode = getActualFatherNode(newVirtualDOM);
+  const fatherNode = getInsertFatherNode(newVirtualDOM);
   renderVirtualNode(newVirtualDOM, fatherNode.realDOM);
 }
 function replaceRealDOM(oldVirtualDOM, newVirtualDOM) {
@@ -526,11 +533,13 @@ function updateClassComponent(instance) {
   share.setState({
     nowVirtualDOM: virtualNode
   });
+  initContext(virtualNode.children[0].context);
   updateVirtualDOM(virtualNode.children[0], instance.render());
   share.setState({
     nowVirtualDOM: null
   });
   commitUpdateList();
+  initContext({});
 }
 function updateFunctionComponent(virtualDOM) {
   const {children, elementProps, component} = virtualDOM;
@@ -538,9 +547,11 @@ function updateFunctionComponent(virtualDOM) {
     phase: PhaseEnum2.UPDATE,
     virtualDOM
   });
+  initContext(virtualDOM.context);
   updateVirtualDOM(children[0], component(elementProps));
   share.deletePhase();
   commitUpdateList();
+  initContext({});
 }
 function cloneVirtualDOM(oldVirtualDOM, props) {
   return __assign2(__assign2({}, oldVirtualDOM), {
@@ -554,12 +565,12 @@ function getActualVirtualNode(virtualDOM) {
   }
   return virtualDOM;
 }
-function getActualFatherNode(virtualDOM) {
+function getInsertFatherNode(virtualDOM) {
   const fatherNode = virtualDOM.father;
-  if (typeof fatherNode.component === "function") {
-    return fatherNode.father;
+  if ((fatherNode == null ? void 0 : fatherNode.realDOM) && fatherNode.realDOM.nodeType !== Node.DOCUMENT_FRAGMENT_NODE) {
+    return fatherNode;
   }
-  return fatherNode;
+  return getInsertFatherNode(fatherNode);
 }
 function replaceChildVirtualDOM(oldChild, newChild) {
   const fatherVirtualDOM = oldChild.father;
@@ -568,7 +579,6 @@ function replaceChildVirtualDOM(oldChild, newChild) {
   newChild.father = fatherVirtualDOM;
 }
 function updateVirtualDOM(oldVirtualNode, element) {
-  console.log(oldVirtualNode.props === element.props);
   if (oldVirtualNode.props === element.props) {
     return oldVirtualNode;
   }
@@ -578,6 +588,7 @@ function updateVirtualDOM(oldVirtualNode, element) {
     virtualDOM: newVirtualNode
   });
   if (!updateContext && oldVirtualNode.name === CustomComponent.Provider) {
+    setContext({component: element.component, props: element.props});
     if (oldVirtualNode.props.value !== element.props.value) {
       contextUpdateList = checkUpdateList({virtualDOM: oldVirtualNode, value: element.props.value});
       setTimeout(() => {
@@ -729,7 +740,6 @@ function isStatic(element, hasStaticFather) {
   return typeof ((_a = element.props) == null ? void 0 : _a.static) === "boolean" ? element.props.static : hasStaticFather;
 }
 function initVirtualDOM(element, hasStaticFather = false) {
-  debugger;
   const fatherStatic = isStatic(element, hasStaticFather);
   const genNode = (fatherVirtual, elementItem, hasStaticFather2 = false) => {
     const {component, props, children, ref} = elementItem;
@@ -749,8 +759,7 @@ function initVirtualDOM(element, hasStaticFather = false) {
         elementType: component,
         props: __assign2(__assign2({}, props), {
           children
-        }),
-        fatherVirtualDOM: fatherVirtual
+        })
       });
       setObjectProps(virtualNode, __assign2(__assign2({
         key: null

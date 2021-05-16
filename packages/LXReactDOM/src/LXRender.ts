@@ -1,5 +1,5 @@
 import { LXComponent } from "../../LXReact/src/LXBaseComponent";
-import { getContextId, checkUpdateList, deleteContext, getContext, setContext } from "../../LXReact/src/LXContext";
+import { getContextId, checkUpdateList, deleteContext, getContext, setContext, initContext } from "../../LXReact/src/LXContext";
 import { lxCreateElement } from "../../LXReact/src/LXElement";
 import { share } from "lx-react-share";
 import { CustomComponent, LXComponentClass, LXContextComponentClass, LXReactElementType, LXVirtualDOMType, PhaseEnum, Update } from "../../type/Component";
@@ -123,11 +123,12 @@ function updateAttribute(dom, oldProps, newProps) {
   })
 }
 
-export function getElement({ fatherVirtualDOM, elementType, props }) {
+export function getElement({ elementType, props }) {
   if(typeof elementType === 'function') {
+    const context = getContext();
     if(elementType.name === CustomComponent.Consumer) {
       const contextId = (elementType as LXContextComponentClass).contextId;
-      const value = fatherVirtualDOM.context[contextId as any].value;
+      const value = context[contextId as any].value
       const instance = new (elementType as LXContextComponentClass)({ value, ...props });
       const element = instance.render();
 
@@ -140,8 +141,8 @@ export function getElement({ fatherVirtualDOM, elementType, props }) {
       const instance = new elementType(props);
       if(Object.prototype.hasOwnProperty.call(Object.getPrototypeOf(instance).constructor, 'contextType')) {
         const contextId = Object.getPrototypeOf(instance).constructor.contextType.Consumer.contextId;
-        if(Object.prototype.hasOwnProperty.call(fatherVirtualDOM.context, contextId)) {
-          instance.context = fatherVirtualDOM.context[contextId].value;
+        if(Object.prototype.hasOwnProperty.call(context, contextId)) {
+          instance.context = context[contextId].value;
         }
       }
 
@@ -226,7 +227,7 @@ export function deleteRealDOM(oldVirtualDOM: LXVirtualDOMType) {
 }
 
 export function insertRealDOM(newVirtualDOM: LXVirtualDOMType) {
-  const fatherNode = getActualFatherNode(newVirtualDOM);
+  const fatherNode = getInsertFatherNode(newVirtualDOM);
   renderVirtualNode(newVirtualDOM, fatherNode.realDOM);
 }
 
@@ -261,11 +262,13 @@ export function updateClassComponent(instance: LXComponent) {
   share.setState({
     nowVirtualDOM: virtualNode,
   });
+  initContext(virtualNode.children[0].context);
   updateVirtualDOM(virtualNode.children[0], instance.render());
   share.setState({
     nowVirtualDOM: null,
   });
   commitUpdateList();
+  initContext({});
 }
 
 export function updateFunctionComponent(virtualDOM: LXVirtualDOMType) {
@@ -274,9 +277,11 @@ export function updateFunctionComponent(virtualDOM: LXVirtualDOMType) {
     phase: PhaseEnum.UPDATE,
     virtualDOM
   });
+  initContext(virtualDOM.context);
   updateVirtualDOM(children[0], (component as Function)(elementProps));
   share.deletePhase();
   commitUpdateList();
+  initContext({});
 }
 
 export function cloneVirtualDOM(oldVirtualDOM: LXVirtualDOMType, props) {
@@ -305,6 +310,16 @@ export function getActualFatherNode(virtualDOM: LXVirtualDOMType) {
   return fatherNode;
 }
 
+export function getInsertFatherNode(virtualDOM: LXVirtualDOMType) {
+  const fatherNode = virtualDOM.father;
+
+  if(fatherNode?.realDOM && fatherNode.realDOM.nodeType !== Node.DOCUMENT_FRAGMENT_NODE) {
+    return fatherNode;
+  }
+
+  return getInsertFatherNode(fatherNode);
+}
+
 export function replaceChildVirtualDOM(oldChild: LXVirtualDOMType, newChild: LXVirtualDOMType) {
   const fatherVirtualDOM = oldChild.father;
   const index = fatherVirtualDOM.children.findIndex(item => item === oldChild);
@@ -321,8 +336,9 @@ export function updateVirtualDOM(oldVirtualNode: LXVirtualDOMType, element: LXRe
     phase: PhaseEnum.UPDATE,
     virtualDOM: newVirtualNode,
   });
-  if(!updateContext && oldVirtualNode.name === CustomComponent.Provider) {
-    if(oldVirtualNode.props.value !== element.props.value) {
+  if(!updateContext && newVirtualNode.name === CustomComponent.Provider) {
+    setContext({ component: element.component, props: element.props });
+    if(newVirtualNode.props.value !== element.props.value) {
       contextUpdateList = checkUpdateList({ virtualDOM: oldVirtualNode, value: element.props.value });
       setTimeout(() => {
         updateContext = true;
@@ -340,6 +356,9 @@ export function updateVirtualDOM(oldVirtualNode: LXVirtualDOMType, element: LXRe
       }, 0);
     }
   }
+  newVirtualNode.context = {
+    ...getContext(),
+  };
   const newProps = {
     ...element.props,
     children: element.children,
@@ -359,7 +378,6 @@ export function updateVirtualDOM(oldVirtualNode: LXVirtualDOMType, element: LXRe
   replaceChildVirtualDOM(oldVirtualNode, newVirtualNode);
   const { instance, component, name } = newVirtualNode;
 
-
   if(instance) {
     // component 组件
     instance.componentWillReceiveProps(element.props);
@@ -367,6 +385,7 @@ export function updateVirtualDOM(oldVirtualNode: LXVirtualDOMType, element: LXRe
     if(!shouldComponentUpdate){
       return newVirtualNode;
     }
+    instance.props = newProps;
     if(name === CustomComponent.Consumer) {
       const contextId = (component as LXContextComponentClass).contextId;
       const value = oldVirtualNode.father.context[contextId as any].value;
@@ -374,8 +393,11 @@ export function updateVirtualDOM(oldVirtualNode: LXVirtualDOMType, element: LXRe
         value,
         ...newProps,
       }
-    }else {
-      instance.props = newProps;
+    }
+    
+    if((newVirtualNode.component as any)?.contextType) {
+      const contextId = getContextId((newVirtualNode.component as any)?.contextType);
+      instance.context = newVirtualNode.context[contextId as any].value;
     }
     newVirtualNode.children = [ updateVirtualDOM(newVirtualNode.children[0], instance.render()) ];
     instance.virtualNode = newVirtualNode;
@@ -501,7 +523,6 @@ export function initVirtualDOM(element: LXReactElementType, hasStaticFather = fa
   const fatherStatic = isStatic(element, hasStaticFather);
   const genNode = (fatherVirtual: LXVirtualDOMType, elementItem: LXReactElementType, hasStaticFather = false) => {
     const { component, props, children, ref } = elementItem;
-    (children as any).isChildren = true;
     const nodeStatic = isStatic(elementItem, hasStaticFather);
     let virtualNode = {} as LXVirtualDOMType;
     share.setPhase({
@@ -521,7 +542,6 @@ export function initVirtualDOM(element: LXReactElementType, hasStaticFather = fa
           ...props, 
           children 
         },
-        fatherVirtualDOM: fatherVirtual, 
       });
       setObjectProps(virtualNode, {
         key: null,
@@ -579,4 +599,5 @@ export function render(Component: LXComponentClass, root: HTMLElement) {
   });
   renderVirtualNode(globalVirtualDOM, root);
   share.deletePhase();
+  initContext({});
 }

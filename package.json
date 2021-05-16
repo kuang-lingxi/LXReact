@@ -1,7 +1,7 @@
 {
   "type": "module",
   "scripts": {
-    "build": "yarn build:LXShare && yarn build:LXReact && yarn build:LXReactDOM && yarn test",
+    "build": "yarn build:LXShare && yarn build:LXReact && yarn build:LXReactDOM",
     "build:LXReact": "esbuild packages/LXReact/index.ts --outfile=packages/LXReact/dist/index.js --bundle --format=esm --target=es6 --external:lx-react-share",
     "build:LXReactDOM": "esbuild packages/LXReactDOM/index.ts --outfile=packages/LXReactDOM/dist/index.js --bundle --format=esm --target=es6 --external:lx-react-share",
     "build:LXShare": "esbuild packages/LXShare/index.ts --outfile=packages/LXShare/dist/index.js --bundle --format=esm --target=es6",

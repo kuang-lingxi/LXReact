@@ -30,11 +30,13 @@ export function lxCreateElement(
   const finalProps = props || {};
   const key = ('key' in finalProps) ? finalProps.key : null;
   const ref = ('ref' in finalProps ) ? finalProps.ref : null;
-  delete finalProps['key']
+  const finalChildren = formatChildren([ ...children ]).flat();
+  (finalChildren as any).isChildren = true;
+  delete finalProps['key'];
   const element = {
     component: elementType,
     props: finalProps,
-    children: formatChildren([ ...children ]).flat(),
+    children: finalChildren,
     name: typeof elementType === 'function' ? elementType.name : elementType,
     key,
     ref,
