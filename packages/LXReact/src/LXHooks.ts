@@ -1,4 +1,5 @@
 import { share } from "lx-react-share";
+import { updateFunctionComponent } from "../../LXReactDOM/src/LXRender";
 import { HooksName, PhaseEnum, StateHook, EffectHook } from "../../type/Component";
 
 function isArrayEqual(arr1, arr2) {
@@ -10,25 +11,29 @@ function isArrayEqual(arr1, arr2) {
     return false;
   }
 
+  let res = true;
+
   arr1.forEach((item1, index) => {
     const item2 = arr2[index];
 
-    return Object.is(item1, item2);
-  })
-}
-
-function setHook(hook) {
-  const { hooksIndex, hooksList } = share.getState();
-
-  const newList = [ ...hooksList ];
-
-  newList.push(hook);
-
-  share.setState({
-    hooksList: newList,
-    hooksIndex: hooksIndex+1,
+    res &&= Object.is(item1, item2);
   });
+
+  return res;
 }
+
+// function setHook(hook) {
+//   const { hooksIndex, hooksList } = share.getState();
+
+//   const newList = [ ...hooksList ];
+
+//   newList.push(hook);
+
+//   share.setState({
+//     hooksList: newList,
+//     hooksIndex: hooksIndex+1,
+//   });
+// }
 
 const initHooks = {
   useLXState: (initState: any) => {
@@ -38,7 +43,8 @@ const initHooks = {
     }else {
       state = initState
     }
-
+    const { virtualDOM } = share.getState();
+    const nowVirtualDOM = virtualDOM[0];
     const hook = {
       name: HooksName.STATE,
       state,
@@ -47,25 +53,35 @@ const initHooks = {
 
     const setState = (newState: any) => {
       hook.state = newState;
+      updateFunctionComponent(nowVirtualDOM);
     }
 
     hook.setState = setState;
 
-    setHook(hook);
+    // setHook(hook);
+    if(!nowVirtualDOM.hooksList) {
+      nowVirtualDOM.hooksList = [];
+    }
+    nowVirtualDOM.hooksList.push(hook);
 
     return [ state, setState ];
   },
   useLXEffect: (func: () => Function | void, deps = []) => {
     const destroy = func();
-
+    const { virtualDOM } = share.getState();
+    const nowVirtualDOM = virtualDOM[0];
     const hook = {
       name: HooksName.STATE,
       func,
       deps,
       destroy: destroy || (() => {}),
+      virtualDOM: null,
     };
-
-    setHook(hook);
+    if(!nowVirtualDOM.hooksList) {
+      nowVirtualDOM.hooksList = [];
+    }
+    nowVirtualDOM.hooksList.push(hook);
+    // setHook(hook);
   }
 }
 
@@ -73,17 +89,13 @@ const initHooks = {
 const updateHooks = {
   // eslint-disable-next-line no-unused-vars
   useLXState: (_unused: any) => {
-    const { hooksIndex, hooksList } = share.getState();
-
-    const hook = hooksList[hooksIndex] as StateHook;
+    const { virtualDOM, hooksIndex } = share.getState();
+    const nowVirtualDOM = virtualDOM[0];
+    const hook = nowVirtualDOM.hooksList[hooksIndex] as StateHook;
 
     if(hook.name !== HooksName.STATE) {
       throw Error('hooks must be used in top function');
     }
-
-    share.setState({
-      hooksIndex: hooksIndex+1,
-    });
 
     return [
       hook.state,
@@ -91,9 +103,9 @@ const updateHooks = {
     ];
   },
   useLXEffect: (func: () => Function | void, deps = []) => {
-    const { hooksIndex, hooksList } = share.getState();
-
-    const oldHook = hooksList[hooksIndex] as EffectHook;
+    const { hooksIndex, virtualDOM } = share.getState();
+    const nowVirtualDOM = virtualDOM[0];
+    const oldHook = nowVirtualDOM.hooksList[hooksIndex] as EffectHook;
 
     const { deps: oldDeps } = oldHook;
 
@@ -105,8 +117,9 @@ const updateHooks = {
         func,
         deps,
         destroy: destroy || (() => {}),
+        virtualDOM: null,
       };
-      hooksList.splice(hooksIndex, 1, hook);
+      nowVirtualDOM.hooksList.splice(hooksIndex, 1, hook);
     }
   }
 }
@@ -124,14 +137,20 @@ const updateHooks = {
 function useHook(name: keyof typeof initHooks) {
   return (...rest) => {
     const { phase } = share.getState();
-    if(phase === PhaseEnum.INIT) {
-      return initHooks[name].apply(null, rest);
+    let res = null;
+    if(phase[0] === PhaseEnum.INIT) {
+      res = initHooks[name].apply(null, rest);
+    }else {
+      res = updateHooks[name].apply(null, rest);
     }
 
-    return updateHooks[name].apply(null, rest);
+    share.addHooksIndex();
+
+    return res;
   }
 }
 
 export const hooks =  {
-  useLXState: useHook('useLXState')
+  useLXState: useHook('useLXState'),
+  useLXEffect: useHook('useLXEffect')
 }

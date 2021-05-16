@@ -110,6 +110,10 @@ export interface LXVirtualDOMType {
   component: string | LXComponentClass | Function,
   props: LXVirtualDOMTypeProps,
   oldProps?: LXVirtualDOMTypeProps,
+  elementProps?: {
+    children: any[],
+    [key: string]: any
+  }
   value?: string,
   children: LXVirtualDOMType[],
   father: LXVirtualDOMType,

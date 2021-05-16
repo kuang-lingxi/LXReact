@@ -1,14 +1,14 @@
-import { HooksListType, PhaseEnum } from "../type/Component";
+import { LXVirtualDOMType, PhaseEnum } from "../type/Component";
 
 class LXShare {
   public state = {
-    phase: PhaseEnum.FREE,
-    hooksList: [],
+    phase: [ PhaseEnum.FREE ],
+    virtualDOM: [ null ],
     hooksIndex: 0,
   } as {
-    phase: PhaseEnum,
-    hooksList: HooksListType,
-    hooksIndex: number
+    phase: PhaseEnum[],
+    hooksIndex: number,
+    virtualDOM: LXVirtualDOMType[],
   };
 
   setState(data) {
@@ -24,6 +24,21 @@ class LXShare {
 
   getState() {
     return this.state;
+  }
+
+  setPhase({ phase, virtualDOM }) {
+   this.state.phase.unshift(phase);
+   this.state.virtualDOM.unshift(virtualDOM)
+  }
+
+  deletePhase() {
+    this.state.phase.shift();
+    this.state.virtualDOM.shift();
+    this.state.hooksIndex = 0;
+  }
+
+  addHooksIndex() {
+    this.state.hooksIndex = this.state.hooksIndex + 1;
   }
 }
 

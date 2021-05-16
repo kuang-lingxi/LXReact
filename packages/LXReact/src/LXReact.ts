@@ -4,13 +4,14 @@ import { lxCreateElement } from './LXElement';
 import { createLXRef } from './LXRef';
 import { hooks } from './LXHooks';
 
-const { useLXState } = hooks;
+const { useLXState, useLXEffect } = hooks;
 
 export {
   lxCreateElement,
   createLXContext,
   createLXRef,
   useLXState,
+  useLXEffect,
   LXComponent,
   LXPurComponent,
   Fragment,
