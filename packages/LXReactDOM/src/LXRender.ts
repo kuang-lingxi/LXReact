@@ -592,7 +592,7 @@ export function initVirtualDOM(element: LXReactElementType, hasStaticFather = fa
 
 export function render(Component: LXComponentClass, root: HTMLElement) {
   globalVirtualDOM = initVirtualDOM(lxCreateElement(Component, {}, {}));
-  console.log("globalVirtualDOM", globalVirtualDOM);
+  // console.log("globalVirtualDOM", globalVirtualDOM);
   share.setPhase({
     phase:  PhaseEnum.COMMIT,
     virtualDOM: null,

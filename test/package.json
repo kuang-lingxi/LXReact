@@ -1,0 +1,10 @@
+{
+  "scripts": {
+    "dev": "vite",
+    "link-react": "yarn link lxreact & yarn link lx-react-dom & yarn link lx-react-share"
+  },
+  "dependencies": {
+    "less": "^4.1.1",
+    "vite": "^2.1.2"
+  }
+}
