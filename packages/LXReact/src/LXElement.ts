@@ -33,6 +33,7 @@ export function lxCreateElement(
   const finalChildren = formatChildren([ ...children ]).flat();
   (finalChildren as any).isChildren = true;
   delete finalProps['key'];
+  delete finalProps['ref'];
   const element = {
     component: elementType,
     props: finalProps,

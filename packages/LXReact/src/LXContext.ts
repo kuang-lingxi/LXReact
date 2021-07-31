@@ -68,16 +68,6 @@ export function getContext() {
   return res;
 }
 
-export function findContext({ contextId }) {
-  return contextList.find(item => Object.prototype.hasOwnProperty.call(item, contextId));
-}
-
-export function hasContext({ component }) {
-  return Object.prototype.hasOwnProperty.call(component, 'contextType');
-}
-
-
-
 
 export const createLXContext = () => {
   const id = Symbol('lxContext');
