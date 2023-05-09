@@ -8,7 +8,7 @@
     "test": "esbuild packages/LXReact/dist/index.js --outfile=packages/LXReact/test/index.cjs.js --bundle --format=cjs && jest",
     "expose": "cd packages/LXReact && yarn link & cd packages/LXReactDOM && yarn link & cd packages/LXShare && yarn link",
     "unexpose": "cd packages/LXReact && yarn unlink & cd packages/LXReactDOM && yarn unlink & cd packages/LXShare && yarn unlink",
-    "demo-init": "yarn expose && cd test && rm -rf node_modules && yarn link-react && yarn",
+    "demo-init": "yarn && yarn expose && cd packages/LXReact && yarn link lx-react-share && cd ../LXReactDOM && yarn link lx-react-share && cd ../../test && rm -rf node_modules && yarn link-react && yarn",
     "demo-dev": "yarn build && cd test && yarn dev"
   },
   "devDependencies": {
